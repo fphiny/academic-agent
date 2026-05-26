@@ -1,0 +1,1480 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>지식베이스 관리 대시보드 - 웹문서</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          boxShadow: {
+            soft: '0 10px 30px rgba(15, 23, 42, 0.08)',
+            panel: '0 18px 40px rgba(15, 23, 42, 0.12)'
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    body { font-family: Pretendard, 'Noto Sans KR', system-ui, sans-serif; }
+    .thin-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+    .thin-scrollbar::-webkit-scrollbar-thumb { background: rgba(148,163,184,.45); border-radius: 999px; }
+    .thin-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar-item[data-active="true"] {
+      background: rgb(15 23 42);
+      color: white;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    }
+    .sidebar-item[data-active="true"] .sidebar-icon {
+      background: rgba(255,255,255,.10);
+      color: white;
+    }
+    .sidebar-item[data-active="true"] .sidebar-sub {
+      color: rgb(203 213 225);
+    }
+    .flow-tab[data-active="true"] {
+      background: rgb(37 99 235);
+      color: white;
+      border-color: rgb(37 99 235);
+    }
+    .flow-panel.hidden { display: none; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-900">
+  <div class="min-h-screen lg:flex">
+    <div id="mobileSidebarBackdrop" class="fixed inset-0 z-40 hidden bg-slate-900/40 lg:hidden"></div>
+
+    <aside id="sidebar" class="fixed left-0 top-0 z-50 flex h-full w-72 -translate-x-full flex-col border-r border-slate-200 bg-white transition-transform duration-300 lg:static lg:translate-x-0">
+      <div class="border-b border-slate-200 px-5 py-6">
+        <div class="flex items-center gap-3">
+          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-soft">
+            <i class="fas fa-graduation-cap"></i>
+          </div>
+          <div>
+            <div class="text-lg font-extrabold tracking-tight">한림대학교 AI 튜터</div>
+            <div class="text-xs text-slate-500">Knowledge Base Console</div>
+          </div>
+        </div>
+        <div class="mt-5 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <div class="text-xs text-slate-500">현재 사용자</div>
+          <div class="mt-1 text-lg font-bold">admin</div>
+          <div class="mt-1 text-xs text-slate-500">웹문서 관리 화면</div>
+        </div>
+      </div>
+
+      <div class="flex flex-1 flex-col px-4 py-6">
+        <div class="px-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Menu</div>
+        <nav class="mt-4 space-y-2">
+          <a class="sidebar-item flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left text-slate-900 hover:bg-slate-50" data-active="false" href="/rag/collections">
+            <span class="sidebar-icon flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100"><i class="fas fa-layer-group"></i></span>
+            <span>
+              <span class="block text-sm font-semibold">컬렉션</span>
+              <span class="sidebar-sub block text-xs text-slate-500">/rag/collections</span>
+            </span>
+          </a>
+          <a class="sidebar-item flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left text-slate-900 hover:bg-slate-50" data-active="false" href="/rag/documents">
+            <span class="sidebar-icon flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100"><i class="fas fa-file-pdf"></i></span>
+            <span>
+              <span class="block text-sm font-semibold">문서</span>
+              <span class="sidebar-sub block text-xs text-slate-500">/rag/documents</span>
+            </span>
+          </a>
+          <a class="sidebar-item flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left text-slate-900 hover:bg-slate-50" data-active="true" href="/rag/web_docs">
+            <span class="sidebar-icon flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100"><i class="fas fa-globe"></i></span>
+            <span>
+              <span class="block text-sm font-semibold">웹문서</span>
+              <span class="sidebar-sub block text-xs text-slate-500">/rag/web_docs</span>
+            </span>
+          </a>
+          <a class="sidebar-item flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left text-slate-900 hover:bg-slate-50" data-active="false" href="/rag/guideline">
+            <span class="sidebar-icon flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100"><i class="fas fa-book-open"></i></span>
+            <span>
+              <span class="block text-sm font-semibold">가이드라인</span>
+              <span class="sidebar-sub block text-xs text-slate-500">/rag/guideline</span>
+            </span>
+          </a>
+        </nav>
+
+        <div class="mt-auto pt-6"><a href="/" class="flex items-center justify-center gap-2 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-200"><i class="fas fa-right-from-bracket"></i>메인으로</a></div>
+        <div class="mt-auto pt-6"><a href="/logout" class="flex items-center justify-center gap-2 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-200"><i class="fas fa-right-from-bracket"></i>로그아웃</a></div>
+      </div>
+    </aside>
+
+    <div class="min-w-0 flex-1">
+      <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
+        <div class="flex items-center justify-between gap-3 px-4 py-4 lg:px-8">
+          <div class="flex min-w-0 items-center gap-3 lg:gap-6">
+            <button id="mobileMenuOpen" type="button" class="h-10 w-10 rounded-xl border border-slate-200 bg-white text-slate-700 lg:hidden">
+              <i class="fas fa-bars"></i>
+            </button>
+            <div class="flex min-w-0 items-center gap-3">
+              <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                <i class="fas fa-globe"></i>
+              </div>
+              <div class="min-w-0">
+                <div class="truncate font-extrabold">웹문서 관리</div>
+                <div class="text-xs text-slate-500">URL 입력 → iframe/GPT 추천 → URL 추출 → 임베딩 추출</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <span id="badge" class="hidden sm:inline-flex items-center rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700">idle</span>
+            <button type="button" class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 shadow-soft">
+              <span class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 font-bold text-slate-600">WB</span>
+              <span class="hidden text-right sm:block">
+                <span class="block text-sm font-semibold">관리 콘솔</span>
+                <span class="block text-xs text-slate-500">웹문서 메뉴</span>
+              </span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main class="px-4 py-6 lg:px-8 lg:py-8">
+        <section class="mb-6 rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div class="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                <i class="fas fa-globe"></i>
+                순서 재구성 완료
+              </div>
+              <h1 class="mt-3 text-2xl font-extrabold tracking-tight text-slate-900 lg:text-3xl">웹문서 처리 플로우</h1>
+              <p class="mt-2 max-w-3xl text-sm leading-7 text-slate-500">
+                1) URL 입력 후 iframe 미리보기와 GPT 추천으로 요소 선택<br />
+                2) URL 추출 결과를 확인하고 삭제/추가<br />
+                3) 임베딩 대상 URL을 ChromaDB 컬렉션으로 전송
+              </p>
+            </div>
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:min-w-[480px]">
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div class="text-xs text-slate-500">컬렉션 수</div>
+                <div id="collectionsSummaryCount" class="mt-2 text-2xl font-bold text-slate-900">-</div>
+                <div class="mt-1 text-xs text-slate-500">GET /api/db/collections</div>
+              </div>
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div class="text-xs text-slate-500">추출 URL 수</div>
+                <div id="extractedSummaryCount" class="mt-2 text-2xl font-bold text-slate-900">0</div>
+                <div class="mt-1 text-xs text-slate-500">POST /extract_urls</div>
+              </div>
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div class="text-xs text-slate-500">임베딩 대상 수</div>
+                <div id="embedSummaryCount" class="mt-2 text-2xl font-bold text-slate-900">0</div>
+                <div class="mt-1 text-xs text-slate-500">POST /embed_urls</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+          <div class="thin-scrollbar flex gap-2 overflow-x-auto pb-1">
+            <button class="flow-tab shrink-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700" data-tab="preview" data-active="true">
+              <i class="fas fa-desktop mr-2"></i>1. URL 입력 / iframe / GPT 추천
+            </button>
+            <button class="flow-tab shrink-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700" data-tab="extract" data-active="false">
+              <i class="fas fa-link mr-2"></i>2. URL 추출 / 삭제 / 추가
+            </button>
+            <button class="flow-tab shrink-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700" data-tab="embed" data-active="false">
+              <i class="fas fa-database mr-2"></i>3. 임베딩 추출
+            </button>
+            <button class="flow-tab shrink-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700" data-tab="results" data-active="false">
+              <i class="fas fa-terminal mr-2"></i>4. 결과
+            </button>
+          </div>
+        </section>
+
+        <section class="flow-panel mt-6" data-panel="preview">
+          <div class="grid gap-6 xl:grid-cols-[1.12fr_.88fr]">
+            <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+              <div class="mb-5 flex items-center justify-between gap-3">
+                <div>
+                  <h2 class="text-lg font-bold text-slate-900">URL 입력 / iframe 미리보기</h2>
+                  <p class="mt-1 text-sm text-slate-500">raw html 출력은 제거했고, iframe만 유지했다. 여기서 GPT 추천과 요소 선택을 같이 처리한다.</p>
+                </div>
+                <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">POST /fetch_html</span>
+              </div>
+
+              <div class="space-y-4">
+                <div>
+                  <label class="mb-2 block text-sm font-semibold text-slate-700">페이지 URL</label>
+                  <input id="previewUrl" type="url" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-blue-500 focus:outline-none" placeholder="https://example.com/page" />
+                </div>
+
+                <div class="flex flex-wrap gap-3">
+                  <button id="btnLoadPreview" type="button" class="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800">페이지 불러오기</button>
+                  <button id="btnRecommend" type="button" class="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100">GPT 추천</button>
+                  <button id="btnHighlightRecommendation" type="button" class="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100" style="display: none;">추천 요소 강조</button>
+                  <button id="btnClearPreviewSelection" type="button" class="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100">선택 초기화</button>
+                  <button id="btnUsePreviewUrlForExtract" type="button" class="rounded-2xl border border-blue-200 bg-blue-50 px-5 py-3 text-sm font-semibold text-blue-700 hover:bg-blue-100">이 URL로 추출 단계 이동</button>
+                </div>
+
+                <div class="rounded-[24px] border border-slate-200 bg-slate-50 p-4">
+                  <div class="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                      <div class="text-sm font-semibold text-slate-900">iframe 미리보기</div>
+                      <div class="mt-1 text-xs text-slate-500">파란색 hover / 노란색 선택 / 빨간색 GPT 추천 강조</div>
+                    </div>
+                    <div id="previewLoadState" class="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700">not loaded</div>
+                  </div>
+                  <iframe
+                    id="previewIframe"
+                    class="h-[560px] w-full rounded-2xl border border-slate-200 bg-white"
+                    referrerpolicy="no-referrer"
+                    sandbox="allow-same-origin"
+                  ></iframe>
+                  <div id="previewSelectionInfo" class="mt-3 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-3 text-sm leading-6 text-slate-500">
+                    아직 선택한 요소가 없습니다. iframe 안 요소를 클릭하면 오른쪽 상단 카드에 마지막 선택 1개만 반영됩니다.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-6">
+              <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+                <h3 class="text-base font-bold text-slate-900">선택 요소</h3>
+                <p class="mt-1 text-sm text-slate-500">가장 마지막으로 클릭한 요소 1개만 유지한다.</p>
+
+                <div id="selectedElementCard" class="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5">
+                  <div class="text-sm text-slate-500">아직 선택한 요소가 없습니다.</div>
+                </div>
+
+                <input type="hidden" id="selectedElementId" />
+                <input type="hidden" id="selectedElementClass" />
+                <input type="hidden" id="selectedElementTag" />
+              </div>
+
+              <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+                <h3 class="text-base font-bold text-slate-900">GPT 추천 결과</h3>
+                <p class="mt-1 text-sm text-slate-500">추천된 값은 자동 저장되고 강조 버튼으로 iframe에 표시할 수 있다.</p>
+                <div class="mt-4 grid gap-4">
+                  <div>
+                    <label class="mb-2 block text-sm font-semibold text-slate-700">추천 ID</label>
+                    <textarea id="recommendIds" class="thin-scrollbar min-h-[140px] w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm"></textarea>
+                  </div>
+                  <div>
+                    <label class="mb-2 block text-sm font-semibold text-slate-700">추천 CLASS</label>
+                    <textarea id="recommendClasses" class="thin-scrollbar min-h-[140px] w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm"></textarea>
+                  </div>
+                </div>
+                <div class="mt-4 flex flex-wrap gap-3">
+                  <button id="btnApplyRecommendationToSelectors" type="button" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                    추천값 1개를 선택 요소에 반영
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="flow-panel hidden mt-6" data-panel="extract">
+          <div class="grid gap-6 xl:grid-cols-[1.05fr_.95fr]">
+            <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+              <div class="mb-5 flex items-center justify-between gap-3">
+                <div>
+                  <h2 class="text-lg font-bold text-slate-900">URL 추출</h2>
+                  <p class="mt-1 text-sm text-slate-500">추출된 URL을 확인하고, 삭제하거나 임베딩 대상으로 넘긴다.</p>
+                </div>
+                <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">POST /extract_urls</span>
+              </div>
+
+              <div class="grid gap-4 md:grid-cols-2">
+                <div class="md:col-span-2">
+                  <label class="mb-2 block text-sm font-semibold text-slate-700">기준 URL</label>
+                  <input id="extractUrl" type="url" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-blue-500 focus:outline-none" placeholder="https://example.com" />
+                </div>
+                <div  style="display: none;">
+                  <label class="mb-2 block text-sm font-semibold text-slate-700">도메인(선택)</label>
+                  <input id="extractDomain" type="text" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-blue-500 focus:outline-none" placeholder="example.com" />
+                </div>
+                <div class="md:col-span-2" >
+                  <label class="mb-2 block text-sm font-semibold text-slate-700">수동 URL 추가</label>
+                  <input id="manualUrlInput" type="url" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-blue-500 focus:outline-none" placeholder="https://example.com/article" />
+                </div>
+              </div>
+
+              <div class="mt-4 flex flex-wrap gap-3">
+                <button id="btnExtractUrls" type="button" class="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800">URL 추출</button>
+                <button id="btnAddManualUrl" type="button" class="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100">수동 URL 추가</button>
+                <button id="btnDeleteSelectedExtracted" type="button" class="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-semibold text-rose-700 hover:bg-rose-100">선택 삭제</button>
+                <button id="btnClearExtracted" type="button" class="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100">전체 비우기</button>
+              </div>
+
+              <div class="mt-5">
+                <div class="mb-3 flex items-center justify-between">
+                  <div>
+                    <div class="text-sm font-semibold text-slate-900">추출된 URL 목록</div>
+                    <div class="mt-1 text-xs text-slate-500">행별 삭제와 선택 삭제를 지원한다.</div>
+                  </div>
+                  <div class="text-xs text-slate-500">총 <span id="extractListCount">0</span>건</div>
+                </div>
+                <div id="extractedUrlList" class="thin-scrollbar max-h-[520px] space-y-3 overflow-auto">
+                  <div class="rounded-2xl border border-dashed border-slate-300 px-4 py-6 text-sm leading-7 text-slate-500">
+                    아직 추출된 URL이 없습니다.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-6">
+              <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+                <h3 class="text-base font-bold text-slate-900">임베딩 대상으로 넘기기</h3>
+                <p class="mt-1 text-sm text-slate-500">여기서 넘긴 URL만 임베딩 단계에서 처리된다.</p>
+                <div class="mt-4 flex flex-wrap gap-3">
+                  <button id="btnAddSelectedToEmbed" type="button" class="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700">선택 URL 추가</button>
+                  <button id="btnAddAllToEmbed" type="button" class="rounded-2xl border border-blue-200 bg-blue-50 px-5 py-3 text-sm font-semibold text-blue-700 hover:bg-blue-100">전체 URL 추가</button>
+                  <button id="btnGoEmbed" type="button" class="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100">임베딩 단계로 이동</button>
+                </div>
+              </div>
+
+              <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+                <div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h3 class="text-base font-bold text-slate-900">임베딩 대상 URL</h3>
+                    <p class="mt-1 text-sm text-slate-500">현재 임베딩 단계로 올라온 URL 목록</p>
+                    <p class="mt-1 text-xs font-semibold text-blue-700">이 목록 전체가 임베딩 실행 대상입니다. 체크박스는 선택 URL 제거용입니다.</p>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <div class="text-xs text-slate-500">총 <span id="extractEmbedListCount">0</span>건</div>
+                    <button id="btnSelectAllEmbedUrlsFromExtract" type="button" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100">전체 선택</button>
+                    <button id="btnDeleteSelectedEmbedUrlsFromExtract" type="button" class="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-100">선택 URL 제거</button>
+                  </div>
+                </div>
+                <div id="extractEmbedUrlList" class="thin-scrollbar max-h-[360px] space-y-3 overflow-auto">
+                  <div class="rounded-2xl border border-dashed border-slate-300 px-4 py-6 text-sm leading-7 text-slate-500">
+                    아직 임베딩 대상 URL이 없습니다.
+                  </div>
+                </div>
+              </div>
+
+              <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+                <h3 class="text-base font-bold text-slate-900">선택 기준</h3>
+                <div class="mt-4 space-y-3 text-sm text-slate-600">
+                  <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>미리보기 URL 사용</span><span class="font-semibold text-sky-700">preview → extract</span></div>
+                  <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>URL 추출</span><span class="font-semibold text-sky-700">/extract_urls</span></div>
+                  <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>임베딩 대상 전달</span><span class="font-semibold text-emerald-700">extract → embed</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="flow-panel hidden mt-6" data-panel="embed">
+          <div class="grid gap-6 xl:grid-cols-[1.05fr_.95fr]">
+            <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+              <div class="mb-5 flex items-center justify-between gap-3">
+                <div>
+                  <h2 class="text-lg font-bold text-slate-900">임베딩 추출</h2>
+                  <p class="mt-1 text-sm text-slate-500">ChromaDB 컬렉션을 선택하고, 선택한 URL을 markdown 문서화 → 청킹 → 임베딩 저장한다.</p>
+                </div>
+                <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">ChromaDB</span>
+              </div>
+
+              <div class="grid gap-4 md:grid-cols-2">
+                <div class="md:col-span-2">
+                  <label class="mb-2 block text-sm font-semibold text-slate-700">대상 컬렉션</label>
+                  <select id="embedCollection" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-blue-500 focus:outline-none">
+                    <option value="">컬렉션을 선택하세요</option>
+                  </select>
+                </div>
+
+                <div class="md:col-span-2 flex flex-wrap gap-3">
+                  <button id="btnLoadCollections" type="button" class="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800">컬렉션 새로고침</button>
+                  <button id="btnGetChannel" type="button" class="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100" style="display: none;">실시간 채널 연결</button>
+                </div>
+
+                <div class="md:col-span-2">
+                  <label class="mb-2 block text-sm font-semibold text-slate-700">연결 채널</label>
+                  <input id="channelName" type="text" readonly class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600" placeholder="연결 안 됨" />
+                </div>
+
+                <div>
+                  <label class="mb-2 block text-sm font-semibold text-slate-700">element_id</label>
+                  <input id="embedElementIds" type="text" readonly class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700" placeholder="선택된 id 1개" />
+                </div>
+                <div>
+                  <label class="mb-2 block text-sm font-semibold text-slate-700">element_class</label>
+                  <input id="embedElementClasses" type="text" readonly class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700" placeholder="선택된 class 1개" />
+                </div>
+
+                <div class="md:col-span-2">
+                  <label class="mb-2 block text-sm font-semibold text-slate-700">meta(JSON, 선택)</label>
+                  <textarea id="embedMeta" class="thin-scrollbar min-h-[140px] w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm">{
+  "source": "web_docs.html",
+  "stage": "embed"
+}</textarea>
+                </div>
+              </div>
+
+              <div class="mt-5 flex flex-wrap gap-3">
+                <button id="btnRunEmbed" type="button" class="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700">임베딩 실행</button>
+                <button id="btnClearEmbedUrls" type="button" class="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100">전체 비우기</button>
+                <button id="btnOpenResults" type="button" class="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100">결과 보기</button>
+              </div>
+            </div>
+
+            <div class="space-y-6">
+              <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+                <div class="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h3 class="text-base font-bold text-slate-900">임베딩 대상 URL</h3>
+                    <p class="mt-1 text-sm text-slate-500">현재 임베딩 단계로 올라온 URL 목록</p>
+                    <p class="mt-1 text-xs font-semibold text-blue-700">이 목록 전체가 임베딩 실행 대상입니다. 체크박스는 선택 URL 제거용입니다.</p>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <div class="text-xs text-slate-500">총 <span id="embedListCount">0</span>건</div>
+                    <button id="btnSelectAllEmbedUrls" type="button" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100">전체 선택</button>
+                    <button id="btnDeleteSelectedEmbedUrls" type="button" class="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-100">선택 URL 제거</button>
+                  </div>
+                </div>
+                <div id="embedUrlList" class="thin-scrollbar max-h-[360px] space-y-3 overflow-auto">
+                  <div class="rounded-2xl border border-dashed border-slate-300 px-4 py-6 text-sm leading-7 text-slate-500">
+                    아직 임베딩 대상 URL이 없습니다.
+                  </div>
+                </div>
+              </div>
+
+              <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+                <h3 class="text-base font-bold text-slate-900">실시간 진행 로그</h3>
+                <div id="liveLog" class="mt-4 space-y-3">
+                  <div class="rounded-2xl border border-dashed border-slate-300 px-4 py-6 text-sm leading-7 text-slate-500">아직 수신한 진행 로그가 없습니다.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="flow-panel hidden mt-6" data-panel="results">
+          <div class="grid gap-6 xl:grid-cols-[1.05fr_.95fr]">
+            <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <h2 class="text-lg font-bold text-slate-900">작업 결과</h2>
+                  <p class="mt-1 text-sm text-slate-500">미리보기, URL 추출, 임베딩 실행 로그가 누적된다.</p>
+                </div>
+                <button id="btnClearActivity" type="button" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">로그 비우기</button>
+              </div>
+              <div id="activityList" class="mt-5 space-y-3">
+                <div class="rounded-2xl border border-dashed border-slate-300 px-4 py-6 text-sm leading-7 text-slate-500">아직 실행된 작업이 없습니다.</div>
+              </div>
+            </div>
+
+            <div class="rounded-[28px] border border-slate-200 bg-slate-950 p-5 shadow-soft lg:p-6">
+              <div class="mb-3 flex items-center justify-between">
+                <div>
+                  <h2 class="text-sm font-semibold text-white">Raw API Result</h2>
+                  <p class="mt-1 text-xs text-slate-400">마지막 응답 원문</p>
+                </div>
+                <button id="btnClearResult" type="button" class="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-700">비우기</button>
+              </div>
+              <pre id="resultBox" class="thin-scrollbar max-h-[720px] overflow-auto whitespace-pre-wrap break-words text-sm text-emerald-300">아직 실행 결과가 없습니다.</pre>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const API = {
+      previewFetch: '/fetch_html',
+      recommend: '/get_gpt_recommendations',
+      extract: '/extract_urls',
+      collections: '/api/db/collections',
+      channel: '/get_channel',
+      embed: '/embed_urls'
+    };
+
+    const sidebar = document.getElementById('sidebar');
+    const mobileMenuOpen = document.getElementById('mobileMenuOpen');
+    const mobileSidebarBackdrop = document.getElementById('mobileSidebarBackdrop');
+    const badge = document.getElementById('badge');
+    const resultBox = document.getElementById('resultBox');
+    const previewIframeEl = document.getElementById('previewIframe');
+    const previewLoadStateEl = document.getElementById('previewLoadState');
+    const previewSelectionInfoEl = document.getElementById('previewSelectionInfo');
+    const selectedElementCardEl = document.getElementById('selectedElementCard');
+    const selectedElementIdEl = document.getElementById('selectedElementId');
+    const selectedElementClassEl = document.getElementById('selectedElementClass');
+    const selectedElementTagEl = document.getElementById('selectedElementTag');
+    const recommendIdsEl = document.getElementById('recommendIds');
+    const recommendClassesEl = document.getElementById('recommendClasses');
+    const extractedUrlListEl = document.getElementById('extractedUrlList');
+    const embedUrlListEl = document.getElementById('embedUrlList');
+    const embedCollectionEl = document.getElementById('embedCollection');
+    const channelNameEl = document.getElementById('channelName');
+    const collectionsSummaryCountEl = document.getElementById('collectionsSummaryCount');
+    const extractedSummaryCountEl = document.getElementById('extractedSummaryCount');
+    const embedSummaryCountEl = document.getElementById('embedSummaryCount');
+    const extractListCountEl = document.getElementById('extractListCount');
+    const embedListCountEl = document.getElementById('embedListCount');
+    const extractEmbedUrlListEl = document.getElementById('extractEmbedUrlList');
+    const extractEmbedListCountEl = document.getElementById('extractEmbedListCount');
+
+    const state = {
+      socket: null,
+      channel: '',
+      currentPreviewUrl: '',
+      previewHtml: '',
+      collections: [],
+      extractedUrls: [],
+      embedUrls: [],
+      recommendations: { ids: [], classes: [] },
+      selectedElement: {
+        id: '',
+        className: '',
+        tagName: ''
+      }
+    };
+
+    function openSidebar() {
+      sidebar.classList.remove('-translate-x-full');
+      mobileSidebarBackdrop.classList.remove('hidden');
+      document.body.classList.add('overflow-hidden');
+    }
+
+    function closeSidebar() {
+      if (window.innerWidth >= 1024) return;
+      sidebar.classList.add('-translate-x-full');
+      mobileSidebarBackdrop.classList.add('hidden');
+      document.body.classList.remove('overflow-hidden');
+    }
+
+    mobileMenuOpen?.addEventListener('click', openSidebar);
+    mobileSidebarBackdrop?.addEventListener('click', closeSidebar);
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth >= 1024) {
+        sidebar.classList.remove('-translate-x-full');
+        mobileSidebarBackdrop.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+      } else {
+        sidebar.classList.add('-translate-x-full');
+      }
+    });
+
+    function uniqueValues(values) {
+      return [...new Set((values || []).map(v => String(v).trim()).filter(Boolean))];
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function showResult(data) {
+      resultBox.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+    }
+
+    function setStatus(stateText) {
+      badge.textContent = stateText;
+      badge.className = 'hidden sm:inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold';
+
+      if (stateText === 'idle') badge.classList.add('bg-slate-100', 'text-slate-700');
+      if (stateText === 'loading') badge.classList.add('bg-blue-50', 'text-blue-700');
+      if (stateText === 'done') badge.classList.add('bg-emerald-50', 'text-emerald-700');
+      if (stateText === 'error') badge.classList.add('bg-rose-50', 'text-rose-700');
+    }
+
+    function setTab(tab) {
+      document.querySelectorAll('.flow-tab').forEach(btn => {
+        btn.dataset.active = String(btn.dataset.tab === tab);
+      });
+
+      document.querySelectorAll('.flow-panel').forEach(panel => {
+        panel.classList.toggle('hidden', panel.dataset.panel !== tab);
+      });
+    }
+
+    document.querySelectorAll('.flow-tab').forEach(btn => {
+      btn.addEventListener('click', () => setTab(btn.dataset.tab));
+    });
+
+    function appendCard(targetId, title, message, options = {}) {
+      const { html = false } = options;
+      const target = document.getElementById(targetId);
+      if (!target) return;
+
+      const empty = target.querySelector('.border-dashed');
+      if (empty) empty.remove();
+
+      const item = document.createElement('div');
+      item.className = 'rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700';
+      item.innerHTML = `
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="font-semibold text-slate-900">${escapeHtml(title)}</div>
+            <div class="mt-1 leading-6">${html ? message : escapeHtml(message)}</div>
+          </div>
+          <span class="text-xs text-slate-400 whitespace-nowrap">방금</span>
+        </div>
+      `;
+      target.prepend(item);
+    }
+
+    function appendActivity(message, title = '작업', html = false) {
+      appendCard('activityList', title, message, { html });
+    }
+
+    function appendLiveLog(message, title = '실시간') {
+      appendCard('liveLog', title, message, { html: false });
+    }
+
+    async function requestJson(url, options = {}) {
+      const res = await fetch(url, options);
+      const text = await res.text();
+
+      let data = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = { raw: text, ok: res.ok };
+      }
+
+      if (!res.ok || data?.ok === false) {
+        throw new Error(data?.error || data?.detail || data?.message || `HTTP ${res.status}`);
+      }
+
+      return data;
+    }
+
+    async function requestForm(url, formData) {
+      return requestJson(url, {
+        method: 'POST',
+        body: formData
+      });
+    }
+
+    async function requestJsonPost(url, payload) {
+      return requestJson(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    }
+
+    function normalizeCollectionItem(item) {
+      if (typeof item === 'string') return { name: item, metadata: {} };
+
+      return {
+        name: item?.name ?? item?.collection ?? item?.collection_name ?? '',
+        metadata: item?.metadata ?? {}
+      };
+    }
+
+    function parseUrlList(payload) {
+      const candidate = payload?.urls ?? payload?.items ?? payload?.results ?? payload?.data?.urls ?? payload?.data ?? payload;
+
+      if (Array.isArray(candidate)) {
+        return uniqueValues(candidate.map(v => String(v).trim()).filter(Boolean));
+      }
+
+      if (typeof candidate === 'string') {
+        return uniqueValues(candidate.split(/\r?\n|,/).map(v => v.trim()).filter(Boolean));
+      }
+
+      return [];
+    }
+
+    function normalizeRecommendation(payload) {
+      const idCandidates = [
+        payload?.element_id,
+        payload?.ids,
+        payload?.id,
+        payload?.recommended_id,
+        payload?.recommended_ids,
+        payload?.data?.element_id,
+        payload?.data?.ids
+      ].filter(v => v != null);
+
+      const classCandidates = [
+        payload?.element_class,
+        payload?.classes,
+        payload?.class,
+        payload?.recommended_class,
+        payload?.recommended_classes,
+        payload?.data?.element_class,
+        payload?.data?.classes
+      ].filter(v => v != null);
+
+      const flatten = arr => arr
+        .flatMap(v => Array.isArray(v) ? v : String(v).split(/\r?\n|,/))
+        .map(v => String(v).trim())
+        .filter(Boolean);
+
+      return {
+        ids: uniqueValues(flatten(idCandidates)),
+        classes: uniqueValues(flatten(classCandidates))
+      };
+    }
+
+    function updatePreviewLoadState(stateValue, label) {
+      previewLoadStateEl.textContent = label || stateValue;
+      previewLoadStateEl.className = 'rounded-full px-3 py-1 text-xs font-semibold';
+
+      if (stateValue === 'idle') previewLoadStateEl.classList.add('bg-slate-200', 'text-slate-700');
+      if (stateValue === 'loading') previewLoadStateEl.classList.add('bg-blue-50', 'text-blue-700');
+      if (stateValue === 'done') previewLoadStateEl.classList.add('bg-emerald-50', 'text-emerald-700');
+      if (stateValue === 'error') previewLoadStateEl.classList.add('bg-rose-50', 'text-rose-700');
+    }
+
+    function preparePreviewHtml(rawHtml, baseUrl) {
+      const source = String(rawHtml || '');
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(source, 'text/html');
+
+      if (!doc.head) {
+        const head = doc.createElement('head');
+        doc.documentElement.prepend(head);
+      }
+
+      doc.querySelectorAll('script, noscript, base, meta[http-equiv="Content-Security-Policy"]').forEach(node => node.remove());
+
+      const base = doc.createElement('base');
+      base.setAttribute('href', String(baseUrl || ''));
+
+      const style = doc.createElement('style');
+      style.textContent = `
+        .__wb_hover { outline: 2px solid #2563eb !important; outline-offset: 2px !important; }
+        .__wb_selected { outline: 3px solid #eab308 !important; background: rgba(250, 204, 21, .18) !important; outline-offset: 2px !important; }
+        .__wb_recommended { outline: 3px solid #ef4444 !important; background: rgba(239, 68, 68, .12) !important; outline-offset: 2px !important; }
+      `;
+
+      doc.head.prepend(style);
+      doc.head.prepend(base);
+
+      return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+    }
+
+    function getPreviewDocument() {
+      return previewIframeEl?.contentDocument || previewIframeEl?.contentWindow?.document || null;
+    }
+
+    function clearPreviewClasses(doc) {
+      doc?.querySelectorAll('.__wb_hover, .__wb_selected, .__wb_recommended').forEach(el => {
+        el.classList.remove('__wb_hover', '__wb_selected', '__wb_recommended');
+      });
+    }
+
+    function setPreviewSelectionInfo(html) {
+      previewSelectionInfoEl.innerHTML = html;
+    }
+
+    function renderSelectedElement() {
+      const { id, className, tagName } = state.selectedElement;
+
+      if (!id && !className && !tagName) {
+        selectedElementCardEl.innerHTML = '<div class="text-sm text-slate-500">아직 선택한 요소가 없습니다.</div>';
+        return;
+      }
+
+      selectedElementCardEl.innerHTML = `
+        <div class="space-y-2">
+          <div class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">SELECTED</div>
+          <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+            <div class="grid gap-2 text-sm">
+              <div><span class="font-semibold text-slate-900">tag</span> : <span class="text-slate-700">${escapeHtml(tagName || '-')}</span></div>
+              <div><span class="font-semibold text-slate-900">id</span> : <span class="text-slate-700">${escapeHtml(id || '-')}</span></div>
+              <div><span class="font-semibold text-slate-900">class</span> : <span class="text-slate-700">${escapeHtml(className || '-')}</span></div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function setSelectedElement(idValue = '', classValue = '', tagValue = '') {
+      state.selectedElement = {
+        id: String(idValue || '').trim(),
+        className: String(classValue || '').trim(),
+        tagName: String(tagValue || '').trim()
+      };
+
+      selectedElementIdEl.value = state.selectedElement.id;
+      selectedElementClassEl.value = state.selectedElement.className;
+      selectedElementTagEl.value = state.selectedElement.tagName;
+
+      renderSelectedElement();
+      syncSelectorToEmbed();
+    }
+
+    function clearSelectedElement() {
+      state.selectedElement = {
+        id: '',
+        className: '',
+        tagName: ''
+      };
+
+      selectedElementIdEl.value = '';
+      selectedElementClassEl.value = '';
+      selectedElementTagEl.value = '';
+
+      renderSelectedElement();
+      syncSelectorToEmbed();
+    }
+
+    function getEffectiveSelectorPayload() {
+      const selectedId = selectedElementIdEl.value.trim();
+      const selectedClass = selectedElementClassEl.value.trim();
+
+      if (selectedId || selectedClass) {
+        return {
+          element_id: selectedId ? [selectedId] : [],
+          element_class: selectedClass ? [selectedClass] : []
+        };
+      }
+
+      const recIds = uniqueValues(recommendIdsEl.value.split(/\r?\n|,/));
+      const recClasses = uniqueValues(recommendClassesEl.value.split(/\r?\n|,/));
+
+      return {
+        element_id: recIds[0] ? [recIds[0]] : [],
+        element_class: recClasses[0] ? [recClasses[0]] : []
+      };
+    }
+
+    function escapeCssClassName(value) {
+      if (window.CSS?.escape) return window.CSS.escape(value);
+      return String(value).replace(/[^a-zA-Z0-9_-]/g, '\\$&');
+    }
+
+    function highlightRecommendations(ids = [], classes = []) {
+      const doc = getPreviewDocument();
+      if (!doc) throw new Error('iframe이 아직 로드되지 않았습니다.');
+
+      doc.querySelectorAll('.__wb_recommended').forEach(el => el.classList.remove('__wb_recommended'));
+
+      let hitCount = 0;
+
+      uniqueValues(ids).forEach(id => {
+        const el = doc.getElementById(id);
+        if (el) {
+          el.classList.add('__wb_recommended');
+          hitCount += 1;
+        }
+      });
+
+      uniqueValues(classes).forEach(className => {
+        doc.querySelectorAll(`.${escapeCssClassName(className)}`).forEach(el => {
+          el.classList.add('__wb_recommended');
+          hitCount += 1;
+        });
+      });
+
+      return hitCount;
+    }
+
+    function attachPreviewInteractions() {
+      const doc = getPreviewDocument();
+      if (!doc) return;
+
+      const body = doc.body;
+      if (body) body.style.cursor = 'crosshair';
+
+      let hoverEl = null;
+      let selectedEl = null;
+
+      doc.addEventListener('mouseover', event => {
+        const el = event.target?.closest?.('*');
+        if (!el || el === doc.documentElement || el === doc.body) return;
+
+        if (hoverEl && hoverEl !== selectedEl) {
+          hoverEl.classList.remove('__wb_hover');
+        }
+
+        hoverEl = el;
+        if (hoverEl !== selectedEl) {
+          hoverEl.classList.add('__wb_hover');
+        }
+      }, true);
+
+      doc.addEventListener('mouseout', () => {
+        if (hoverEl && hoverEl !== selectedEl) {
+          hoverEl.classList.remove('__wb_hover');
+        }
+      }, true);
+
+      doc.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const el = event.target?.closest?.('*');
+        if (!el || el === doc.documentElement || el === doc.body) return;
+
+        if (selectedEl) selectedEl.classList.remove('__wb_selected');
+        if (hoverEl && hoverEl !== el) hoverEl.classList.remove('__wb_hover');
+
+        selectedEl = el;
+        selectedEl.classList.remove('__wb_hover');
+        selectedEl.classList.add('__wb_selected');
+
+        const selectedId = el.id ? el.id : '';
+        const selectedClass = [...(el.classList || [])].filter(cls => !cls.startsWith('__wb_'))[0] || '';
+        const selectedTag = el.tagName?.toLowerCase?.() || '';
+
+        setSelectedElement(selectedId, selectedClass, selectedTag);
+
+        setPreviewSelectionInfo(`
+          <div class="font-semibold text-slate-900">선택한 요소가 반영되었습니다.</div>
+          <div class="mt-2 text-slate-600">tag: <span class="font-semibold text-slate-900">${escapeHtml(selectedTag || '-')}</span></div>
+          <div class="mt-1 text-slate-600">id: <span class="font-semibold text-slate-900">${escapeHtml(selectedId || '-')}</span></div>
+          <div class="mt-1 text-slate-600">class: <span class="font-semibold text-slate-900">${escapeHtml(selectedClass || '-')}</span></div>
+        `);
+
+        appendActivity(
+          `iframe 요소 선택: id <span class="font-semibold">${escapeHtml(selectedId || '-')}</span> / class <span class="font-semibold">${escapeHtml(selectedClass || '-')}</span>`,
+          'iframe 선택',
+          true
+        );
+      }, true);
+    }
+
+    function syncSelectorToEmbed() {
+      document.getElementById('embedElementIds').value = state.selectedElement.id || '';
+      document.getElementById('embedElementClasses').value = state.selectedElement.className || '';
+    }
+
+    function renderCollections(items) {
+      state.collections = items.map(normalizeCollectionItem).filter(v => v.name);
+      collectionsSummaryCountEl.textContent = String(state.collections.length);
+
+      const current = embedCollectionEl.value;
+      embedCollectionEl.innerHTML = [
+        '<option value="">컬렉션을 선택하세요</option>',
+        ...state.collections.map(item => `<option value="${escapeHtml(item.name)}">${escapeHtml(item.name)}</option>`)
+      ].join('');
+
+      if (state.collections.some(item => item.name === current)) {
+        embedCollectionEl.value = current;
+      }
+    }
+
+    async function loadCollections() {
+      const data = await requestJson(API.collections);
+      const list = data?.collections || data?.items || data || [];
+      renderCollections(Array.isArray(list) ? list : []);
+      showResult(data);
+      appendActivity(`컬렉션 로드 완료: <span class="font-semibold">${escapeHtml(state.collections.length)}</span>건`, '컬렉션', true);
+    }
+
+    function renderExtractedUrls() {
+      extractedSummaryCountEl.textContent = String(state.extractedUrls.length);
+      extractListCountEl.textContent = String(state.extractedUrls.length);
+
+      if (!state.extractedUrls.length) {
+        extractedUrlListEl.innerHTML = `
+          <div class="rounded-2xl border border-dashed border-slate-300 px-4 py-6 text-sm leading-7 text-slate-500">
+            아직 추출된 URL이 없습니다.
+          </div>
+        `;
+        return;
+      }
+
+      extractedUrlListEl.innerHTML = state.extractedUrls.map((url, idx) => `
+        <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4" data-url-row="${escapeHtml(url)}">
+          <div class="flex items-start gap-3">
+            <label class="mt-1">
+              <input type="checkbox" class="extract-url-check h-4 w-4 rounded border-slate-300" data-url="${escapeHtml(url)}" />
+            </label>
+            <div class="min-w-0 flex-1">
+              <div class="break-all text-sm leading-6 text-slate-800">${escapeHtml(url)}</div>
+              <div class="mt-2 text-xs text-slate-500">#${idx + 1}</div>
+            </div>
+            <button
+              type="button"
+              class="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-100"
+              data-action="remove-extracted"
+              data-url="${escapeHtml(url)}"
+            >
+              삭제
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderEmbedUrls() {
+      embedSummaryCountEl.textContent = String(state.embedUrls.length);
+      embedListCountEl.textContent = String(state.embedUrls.length);
+
+      if (extractEmbedListCountEl) {
+        extractEmbedListCountEl.textContent = String(state.embedUrls.length);
+      }
+
+      const emptyHtml = `
+        <div class="rounded-2xl border border-dashed border-slate-300 px-4 py-6 text-sm leading-7 text-slate-500">
+          아직 임베딩 대상 URL이 없습니다.
+        </div>
+      `;
+
+      if (!state.embedUrls.length) {
+        embedUrlListEl.innerHTML = emptyHtml;
+
+        if (extractEmbedUrlListEl) {
+          extractEmbedUrlListEl.innerHTML = emptyHtml;
+        }
+
+        return;
+      }
+
+      const listHtml = state.embedUrls.map((url, idx) => `
+        <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <div class="flex items-start gap-3">
+            <label class="mt-1">
+              <input type="checkbox" class="embed-url-check h-4 w-4 rounded border-slate-300" data-url="${escapeHtml(url)}" />
+            </label>
+            <div class="min-w-0 flex-1">
+              <div class="break-all text-sm leading-6 text-slate-800">${escapeHtml(url)}</div>
+              <div class="mt-2 text-xs text-slate-500">#${idx + 1}</div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      embedUrlListEl.innerHTML = listHtml;
+
+      if (extractEmbedUrlListEl) {
+        extractEmbedUrlListEl.innerHTML = listHtml;
+      }
+    }
+
+    function getCheckedUrls(selector) {
+      return uniqueValues(
+        [...document.querySelectorAll(selector)]
+          .filter(el => el.checked)
+          .map(el => el.dataset.url)
+      );
+    }
+
+    function addExtractedUrls(urls) {
+      state.extractedUrls = uniqueValues([...state.extractedUrls, ...urls]);
+      renderExtractedUrls();
+    }
+
+    function addEmbedUrls(urls) {
+      state.embedUrls = uniqueValues([...state.embedUrls, ...urls]);
+      renderEmbedUrls();
+    }
+
+    function removeExtractedUrl(url) {
+      state.extractedUrls = state.extractedUrls.filter(v => v !== url);
+      renderExtractedUrls();
+      appendActivity(`추출 URL 삭제: <span class="font-semibold">${escapeHtml(url)}</span>`, 'URL 삭제', true);
+    }
+
+    async function acquireChannel() {
+      const data = await requestJson(API.channel);
+      const channel = data?.channel || data?.data?.channel || '';
+
+      if (!channel) {
+        throw new Error('채널명을 받지 못했습니다.');
+      }
+
+      channelNameEl.value = channel;
+      state.channel = channel;
+      connectSocketForChannel(channel);
+      showResult(data);
+      appendActivity(`실시간 채널 연결 완료: <span class="font-semibold">${escapeHtml(channel)}</span>`, '채널', true);
+      return channel;
+    }
+
+    function connectSocketForChannel(channel) {
+      if (typeof io !== 'function') return;
+
+      if (!state.socket) {
+        state.socket = io({
+          transports: ['websocket', 'polling']
+        });
+      }
+
+      state.socket.off(channel);
+      state.socket.on(channel, payload => {
+        const message = payload?.message || payload?.status || payload?.progress || JSON.stringify(payload);
+        appendLiveLog(message, '채널 수신');
+        showResult(payload);
+      });
+
+      state.socket.off('scrape_progress');
+      state.socket.on('scrape_progress', payload => {
+        const message = payload?.message || payload?.status || payload?.progress || JSON.stringify(payload);
+        appendLiveLog(message, '보조 로그');
+      });
+    }
+
+    function parseMetaValue() {
+      const raw = document.getElementById('embedMeta').value.trim();
+      if (!raw) return {};
+
+      try {
+        return JSON.parse(raw);
+      } catch {
+        throw new Error('meta JSON 형식이 잘못되었습니다.');
+      }
+    }
+
+    extractedUrlListEl?.addEventListener('click', event => {
+      const button = event.target.closest('[data-action="remove-extracted"]');
+      if (!button) return;
+      const url = button.dataset.url || '';
+      if (!url) return;
+      removeExtractedUrl(url);
+    });
+
+    document.getElementById('btnLoadCollections')?.addEventListener('click', async () => {
+      try {
+        setStatus('loading');
+        await loadCollections();
+        setStatus('done');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity(`컬렉션 조회 실패: ${escapeHtml(String(err))}`, '오류');
+        setStatus('error');
+      }
+    });
+
+    document.getElementById('btnLoadPreview')?.addEventListener('click', async () => {
+      try {
+        setStatus('loading');
+        updatePreviewLoadState('loading', 'loading');
+
+        const url = document.getElementById('previewUrl').value.trim();
+        if (!url) throw new Error('페이지 URL을 입력하세요.');
+
+        clearSelectedElement();
+        setPreviewSelectionInfo('새 페이지를 불러오는 중입니다.');
+        state.recommendations = { ids: [], classes: [] };
+        recommendIdsEl.value = '';
+        recommendClassesEl.value = '';
+
+        const data = await requestJsonPost(API.previewFetch, { url });
+        const html = data?.html || data?.data?.html || data?.raw || '';
+
+        state.currentPreviewUrl = url;
+        state.previewHtml = html;
+
+        previewIframeEl.onload = () => {
+          updatePreviewLoadState('done', 'loaded');
+
+          try {
+            attachPreviewInteractions();
+
+            if (state.recommendations.ids.length || state.recommendations.classes.length) {
+              highlightRecommendations(state.recommendations.ids, state.recommendations.classes);
+            }
+          } catch (e) {
+            updatePreviewLoadState('error', 'interaction error');
+            appendActivity(`iframe 초기화 실패: ${escapeHtml(String(e))}`, '오류');
+          }
+        };
+
+        previewIframeEl.srcdoc = preparePreviewHtml(html, url);
+
+        showResult(data);
+        appendActivity('페이지 로드 완료 + iframe 렌더링 완료', '미리보기');
+        setStatus('done');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        updatePreviewLoadState('error', 'load failed');
+        appendActivity(`페이지 로드 실패: ${escapeHtml(String(err))}`, '오류');
+        setStatus('error');
+      }
+    });
+
+    document.getElementById('btnRecommend')?.addEventListener('click', async () => {
+      try {
+        setStatus('loading');
+
+        const url = document.getElementById('previewUrl').value.trim();
+        if (!url) throw new Error('페이지 URL을 입력하세요.');
+
+        const form = new FormData();
+        form.append('url', url);
+
+        const data = await requestForm(API.recommend, form);
+        const rec = normalizeRecommendation(data);
+
+        state.recommendations = rec;
+        recommendIdsEl.value = rec.ids.join('\n');
+        recommendClassesEl.value = rec.classes.join('\n');
+
+        try {
+          const hitCount = highlightRecommendations(rec.ids, rec.classes);
+          appendActivity(
+            `GPT 추천 완료: id ${escapeHtml(rec.ids.length)}개 / class ${escapeHtml(rec.classes.length)}개 / iframe 강조 ${escapeHtml(hitCount)}건`,
+            'GPT 추천'
+          );
+        } catch {
+          appendActivity(
+            `GPT 추천 완료: id ${escapeHtml(rec.ids.length)}개 / class ${escapeHtml(rec.classes.length)}개`,
+            'GPT 추천'
+          );
+        }
+
+        showResult(data);
+        setStatus('done');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity(`GPT 추천 실패: ${escapeHtml(String(err))}`, '오류');
+        setStatus('error');
+      }
+    });
+
+    document.getElementById('btnHighlightRecommendation')?.addEventListener('click', () => {
+      try {
+        const ids = uniqueValues(recommendIdsEl.value.split(/\r?\n|,/));
+        const classes = uniqueValues(recommendClassesEl.value.split(/\r?\n|,/));
+        state.recommendations = { ids, classes };
+        const hitCount = highlightRecommendations(ids, classes);
+        appendActivity(`추천 요소 강조 완료: <span class="font-semibold">${escapeHtml(hitCount)}</span>건`, 'iframe 강조', true);
+      } catch (err) {
+        appendActivity(`추천 요소 강조 실패: ${escapeHtml(String(err))}`, '오류');
+      }
+    });
+
+    document.getElementById('btnApplyRecommendationToSelectors')?.addEventListener('click', () => {
+      const firstId = uniqueValues(recommendIdsEl.value.split(/\r?\n|,/))[0] || '';
+      const firstClass = uniqueValues(recommendClassesEl.value.split(/\r?\n|,/))[0] || '';
+
+      setSelectedElement(firstId, firstClass, '');
+      setPreviewSelectionInfo(`
+        <div class="font-semibold text-slate-900">추천값 1개를 선택 요소로 반영했습니다.</div>
+        <div class="mt-2 text-slate-600">id: <span class="font-semibold text-slate-900">${escapeHtml(firstId || '-')}</span></div>
+        <div class="mt-1 text-slate-600">class: <span class="font-semibold text-slate-900">${escapeHtml(firstClass || '-')}</span></div>
+      `);
+
+      appendActivity('추천값 1개를 선택 요소에 반영했습니다.', '추천 반영');
+    });
+
+    document.getElementById('btnClearPreviewSelection')?.addEventListener('click', () => {
+      const doc = getPreviewDocument();
+      clearPreviewClasses(doc);
+      clearSelectedElement();
+      setPreviewSelectionInfo('선택 요소를 초기화했습니다. iframe 안 요소를 다시 클릭하면 반영됩니다.');
+      appendActivity('선택 요소 초기화 완료', '초기화');
+    });
+
+    document.getElementById('btnUsePreviewUrlForExtract')?.addEventListener('click', () => {
+      const url = document.getElementById('previewUrl').value.trim();
+      if (!url) return;
+
+      document.getElementById('extractUrl').value = url;
+      setTab('extract');
+      appendActivity('현재 미리보기 URL을 URL 추출 단계로 복사했습니다.', '단계 이동');
+    });
+
+    document.getElementById('btnExtractUrls')?.addEventListener('click', async () => {
+      try {
+        setStatus('loading');
+
+        const url = document.getElementById('extractUrl').value.trim();
+        const domain = document.getElementById('extractDomain').value.trim();
+        if (!url) throw new Error('기준 URL을 입력하세요.');
+
+        const form = new FormData();
+        form.append('url', url);
+        if (domain) form.append('domain', domain);
+
+        const data = await requestForm(API.extract, form);
+        const urls = parseUrlList(data);
+
+        addExtractedUrls(urls);
+        showResult(data);
+        appendActivity(`URL 추출 완료: <span class="font-semibold">${escapeHtml(urls.length)}</span>건`, 'URL 추출', true);
+        setStatus('done');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity(`URL 추출 실패: ${escapeHtml(String(err))}`, '오류');
+        setStatus('error');
+      }
+    });
+
+    document.getElementById('btnAddManualUrl')?.addEventListener('click', () => {
+      const input = document.getElementById('manualUrlInput');
+      const url = input.value.trim();
+
+      if (!url) return;
+
+      addExtractedUrls([url]);
+      input.value = '';
+      appendActivity(`수동 URL 추가: <span class="font-semibold">${escapeHtml(url)}</span>`, '수동 추가', true);
+    });
+
+    document.getElementById('btnDeleteSelectedExtracted')?.addEventListener('click', () => {
+      const checked = getCheckedUrls('.extract-url-check');
+      if (!checked.length) return;
+
+      state.extractedUrls = state.extractedUrls.filter(url => !checked.includes(url));
+      renderExtractedUrls();
+      appendActivity(`추출 URL 선택 삭제: <span class="font-semibold">${escapeHtml(checked.length)}</span>건`, 'URL 삭제', true);
+    });
+
+    document.getElementById('btnClearExtracted')?.addEventListener('click', () => {
+      state.extractedUrls = [];
+      renderExtractedUrls();
+      appendActivity('추출 URL 전체 비우기 완료', '초기화');
+    });
+
+    document.getElementById('btnAddSelectedToEmbed')?.addEventListener('click', () => {
+      const checked = getCheckedUrls('.extract-url-check');
+      if (!checked.length) return;
+
+      addEmbedUrls(checked);
+      appendActivity(`선택 URL을 임베딩 대상으로 추가: <span class="font-semibold">${escapeHtml(checked.length)}</span>건`, '임베딩 대상', true);
+    });
+
+    document.getElementById('btnAddAllToEmbed')?.addEventListener('click', () => {
+      addEmbedUrls(state.extractedUrls);
+      appendActivity(`전체 URL을 임베딩 대상으로 추가: <span class="font-semibold">${escapeHtml(state.extractedUrls.length)}</span>건`, '임베딩 대상', true);
+    });
+
+    document.getElementById('btnGoEmbed')?.addEventListener('click', () => {
+      syncSelectorToEmbed();
+      setTab('embed');
+    });
+
+    document.getElementById('btnGetChannel')?.addEventListener('click', async () => {
+      try {
+        setStatus('loading');
+        await acquireChannel();
+        setStatus('done');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity(`채널 연결 실패: ${escapeHtml(String(err))}`, '오류');
+        setStatus('error');
+      }
+    });
+
+    function setAllEmbedUrlChecks(checked) {
+      document.querySelectorAll('.embed-url-check').forEach(el => {
+        el.checked = checked;
+      });
+    }
+
+    function removeCheckedEmbedUrls() {
+      const checked = getCheckedUrls('.embed-url-check');
+      if (!checked.length) {
+        appendActivity('제거할 임베딩 대상 URL을 먼저 체크하세요.', '임베딩 대상');
+        return;
+      }
+
+      state.embedUrls = state.embedUrls.filter(url => !checked.includes(url));
+      renderEmbedUrls();
+      appendActivity(`임베딩 대상 URL 제거: <span class="font-semibold">${escapeHtml(checked.length)}</span>건`, '임베딩 대상', true);
+    }
+
+    document.getElementById('btnSelectAllEmbedUrls')?.addEventListener('click', () => setAllEmbedUrlChecks(true));
+    document.getElementById('btnSelectAllEmbedUrlsFromExtract')?.addEventListener('click', () => setAllEmbedUrlChecks(true));
+    document.getElementById('btnDeleteSelectedEmbedUrls')?.addEventListener('click', removeCheckedEmbedUrls);
+    document.getElementById('btnDeleteSelectedEmbedUrlsFromExtract')?.addEventListener('click', removeCheckedEmbedUrls);
+
+    document.getElementById('btnClearEmbedUrls')?.addEventListener('click', () => {
+      state.embedUrls = [];
+      renderEmbedUrls();
+      appendActivity('임베딩 대상 URL 전체 비우기 완료', '초기화');
+    });
+
+    document.getElementById('btnRunEmbed')?.addEventListener('click', async () => {
+      try {
+        setStatus('loading');
+
+        const index = embedCollectionEl.value.trim();
+        if (!index) throw new Error('대상 컬렉션을 선택하세요.');
+        if (!state.embedUrls.length) throw new Error('임베딩 대상 URL이 없습니다.');
+
+        let channel = channelNameEl.value.trim();
+        if (!channel) {
+          try {
+            channel = await acquireChannel();
+          } catch {
+            channel = '';
+          }
+        }
+
+        const selectorPayload = getEffectiveSelectorPayload();
+        if (!selectorPayload.element_id.length && !selectorPayload.element_class.length) {
+          appendActivity('선택 요소가 없어서 페이지 기본 본문 fallback 추출로 진행됩니다.', '선택 요소 없음');
+        }
+
+        const payload = {
+          index,
+          urls: state.embedUrls,
+          element_id: selectorPayload.element_id,
+          element_class: selectorPayload.element_class,
+          meta: {
+            ...parseMetaValue(),
+            channel
+          }
+        };
+
+        appendLiveLog(`임베딩 시작: collection=${index}, url_count=${state.embedUrls.length}`, '임베딩 시작');
+
+        const data = await requestJsonPost(API.embed, payload);
+        showResult(data);
+
+        const successCount = Number(data?.stored ?? 0);
+        const failedCount = Number(data?.failed ?? 0);
+        const firstItem = Array.isArray(data?.items) && data.items.length ? data.items[0] : null;
+
+        appendActivity(
+          `임베딩 실행 완료: <span class="font-semibold">${escapeHtml(index)}</span> / 성공 ${escapeHtml(successCount)}건 / 실패 ${escapeHtml(failedCount)}건`,
+          '임베딩',
+          true
+        );
+
+        if (firstItem) {
+          appendActivity(
+            `예시 결과: doc_id <span class="font-semibold">${escapeHtml(firstItem.doc_id || '-')}</span> / chunks <span class="font-semibold">${escapeHtml(firstItem.chunks ?? '-')}</span> / markdown_length <span class="font-semibold">${escapeHtml(firstItem.markdown_length ?? '-')}</span>`,
+            '임베딩 결과',
+            true
+          );
+        }
+
+        setTab('results');
+        setStatus('done');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity(`임베딩 실행 실패: ${escapeHtml(String(err))}`, '오류');
+        setStatus('error');
+      }
+    });
+
+    document.getElementById('btnOpenResults')?.addEventListener('click', () => {
+      setTab('results');
+    });
+
+    document.getElementById('btnClearActivity')?.addEventListener('click', () => {
+      const target = document.getElementById('activityList');
+      target.innerHTML = '<div class="rounded-2xl border border-dashed border-slate-300 px-4 py-6 text-sm leading-7 text-slate-500">아직 실행된 작업이 없습니다.</div>';
+    });
+
+    document.getElementById('btnClearResult')?.addEventListener('click', () => {
+      resultBox.textContent = '아직 실행 결과가 없습니다.';
+    });
+
+    setTab('preview');
+    updatePreviewLoadState('idle', 'not loaded');
+    renderSelectedElement();
+
+    (async function init() {
+      try {
+        setStatus('loading');
+        await loadCollections();
+        renderExtractedUrls();
+        renderEmbedUrls();
+        syncSelectorToEmbed();
+        setStatus('idle');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity(`초기 로딩 실패: ${escapeHtml(String(err))}`, '오류');
+        setStatus('error');
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    animation: {
+                        blob: "blob 7s infinite",
+                        'slide-up': "slide-up 0.5s ease-out forwards",
+                        'pulse-subtle': "pulse-subtle 2s infinite",
+                        'spin-slow': 'spin 3s linear infinite',
+                    },
+                    keyframes: {
+                        blob: {
+                            "0%": { transform: "translate(0px, 0px) scale(1)" },
+                            "33%": { transform: "translate(30px, -50px) scale(1.1)" },
+                            "66%": { transform: "translate(-20px, 20px) scale(0.9)" },
+                            "100%": { transform: "translate(0px, 0px) scale(1)" },
+                        },
+                        "slide-up": {
+                            "0%": { transform: "translateY(20px)", opacity: "0" },
+                            "100%": { transform: "translateY(0)", opacity: "1" },
+                        },
+                        "pulse-subtle": {
+                            "0%": { transform: "scale(1)" },
+                            "50%": { transform: "scale(1.01)" },
+                            "100%": { transform: "scale(1)" },
+                        }
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body class="bg-slate-50 dark:bg-slate-950 text-gray-900 dark:text-gray-100 overflow-hidden">
+
+    <div class="min-h-screen w-full flex items-center justify-center p-4 relative">
+
+        <div class="absolute inset-0 overflow-hidden -z-10">
+            <div
+                class="absolute top-0 left-1/4 w-96 h-96 bg-blue-200 dark:bg-blue-900/20 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob">
+            </div>
+            <div
+                class="absolute bottom-0 right-1/4 w-96 h-96 bg-sky-200 dark:bg-sky-900/20 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000">
+            </div>
+            <div
+                class="absolute top-1/2 left-1/2 w-96 h-96 bg-cyan-200 dark:bg-cyan-900/20 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-4000">
+            </div>
+        </div>
+
+        <div
+            class="max-w-md w-full relative backdrop-blur-2xl bg-white/80 dark:bg-slate-900/75 rounded-[2.2rem] shadow-[0_30px_80px_rgba(15,23,42,0.18)] overflow-hidden p-8 border border-white/60 dark:border-slate-800/80">
+
+            <div class="absolute top-0 inset-x-0 h-1 bg-slate-200 dark:bg-slate-800">
+                <div class="h-full bg-gradient-to-r from-blue-600 to-sky-500 transition-all duration-500"
+                    style="width: 50%;" id="progress-bar"></div>
+            </div>
+
+            <div class="mt-6 relative" id="form-container">
+
+                <div class="step active" id="step-1">
+                    <div class="text-center mb-8 animate-slide-up">
+                        <div
+                            class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-sky-500 p-0.5 mb-4">
+                            <div
+                                class="w-full h-full bg-white dark:bg-slate-950 rounded-2xl flex items-center justify-center">
+                                <i class="fas fa-university text-xl text-blue-600"></i>
+                            </div>
+                        </div>
+                        <h2 class="text-2xl font-bold text-slate-900 dark:text-white">학생 포털 로그인</h2>
+                        <p class="mt-2 text-slate-500 dark:text-slate-400 text-sm">학사 시스템 정보를 안전하게 불러옵니다</p>
+                    </div>
+
+                    <div class="space-y-4 animate-slide-up">
+                        <div>
+                            <label
+                                class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 ml-1">학번</label>
+                            <input type="text" id="student_id"
+                                class="w-full px-4 py-3 bg-white/80 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all shadow-sm"
+                                placeholder="학번을 입력하세요 (예: 20230000)" onkeypress="if(event.key === 'Enter') nextStep()">
+                        </div>
+                        <button type="button" onclick="nextStep()"
+                            class="w-full py-3 bg-gradient-to-r from-blue-600 to-sky-500 text-white rounded-2xl font-semibold shadow-[0_16px_40px_rgba(37,99,235,0.28)] hover:brightness-110 transition-all transform active:scale-95">
+                            다음
+                        </button>
+                    </div>
+                </div>
+
+                <div class="step hidden" id="step-2">
+                    <div class="text-center mb-8 animate-slide-up">
+                        <div
+                            class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white dark:bg-slate-950 mb-4 shadow-inner">
+                            <i class="fas fa-lock text-xl text-blue-600"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-slate-900 dark:text-white">비밀번호 확인</h2>
+                        <p class="mt-2 text-slate-500 dark:text-slate-400 text-sm">포털 비밀번호를 입력하고 계속 진행하세요</p>
+                    </div>
+
+                    <div class="space-y-4 animate-slide-up">
+                        <div>
+                            <label
+                                class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 ml-1">비밀번호</label>
+                            <input type="password" id="password"
+                                class="w-full px-4 py-3 bg-white/80 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all shadow-sm"
+                                placeholder="비밀번호" onkeypress="if(event.key === 'Enter') submitLogin()">
+                        </div>
+
+                        <button type="button" id="login-btn" onclick="submitLogin()"
+                            class="w-full py-3 bg-gradient-to-r from-blue-600 to-sky-500 text-white rounded-2xl font-semibold shadow-[0_16px_40px_rgba(37,99,235,0.28)] hover:brightness-110 transition-all transform active:scale-95 flex items-center justify-center gap-2">
+                            <span>로그인 및 데이터 불러오기</span>
+                            <i class="fas fa-arrow-right text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="loading-overlay"
+                    class="absolute inset-0 bg-white/85 dark:bg-slate-900/92 rounded-[2.2rem] flex flex-col items-center justify-center z-20 hidden backdrop-blur-sm">
+                    <div
+                        class="w-12 h-12 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin mb-4">
+                    </div>
+                    <p class="text-blue-600 dark:text-blue-400 font-bold animate-pulse">데이터 수집 중...</p>
+                    <p class="text-xs text-gray-500 mt-2">잠시만 기다려주세요 · 보통 10~20초 정도 걸립니다</p>
+                </div>
+
+            </div>
+
+            <div class="mt-6 flex justify-between text-sm px-1" id="nav-buttons">
+                <button onclick="prevStep()"
+                    class="text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors invisible"
+                    id="back-btn">
+                    <i class="fas fa-arrow-left mr-1"></i> 뒤로
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 상태 관리
+        let currentStep = 1;
+        const studentIdInput = document.getElementById('student_id');
+        const passwordInput = document.getElementById('password');
+
+        function nextStep() {
+            // 유효성 검사
+            if (!studentIdInput.value.trim()) {
+                studentIdInput.focus();
+                studentIdInput.classList.add('ring-2', 'ring-red-500');
+                setTimeout(() => studentIdInput.classList.remove('ring-2', 'ring-red-500'), 1000);
+                return;
+            }
+
+            // 화면 전환 애니메이션
+            document.getElementById('step-1').classList.add('hidden');
+            document.getElementById('step-2').classList.remove('hidden');
+            document.getElementById('back-btn').classList.remove('invisible');
+
+            currentStep = 2;
+            updateProgressBar();
+
+            // 비밀번호 입력창에 포커스
+            setTimeout(() => passwordInput.focus(), 100);
+        }
+
+        function prevStep() {
+            document.getElementById('step-2').classList.add('hidden');
+            document.getElementById('step-1').classList.remove('hidden');
+            document.getElementById('back-btn').classList.add('invisible');
+
+            currentStep = 1;
+            updateProgressBar();
+        }
+
+        function updateProgressBar() {
+            const progress = currentStep === 1 ? 50 : 100;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+        }
+
+        async function submitLogin() {
+            const student_id = studentIdInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (!password) {
+                passwordInput.focus();
+                passwordInput.classList.add('ring-2', 'ring-red-500');
+                setTimeout(() => passwordInput.classList.remove('ring-2', 'ring-red-500'), 1000);
+                return;
+            }
+
+            // 로딩 화면 표시
+            const btn = document.getElementById('login-btn');
+            const loading = document.getElementById('loading-overlay');
+
+            loading.classList.remove('hidden'); // 로딩 오버레이 보이기
+
+            try {
+                // main.py의 /login API 호출
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ student_id, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // 로그인 성공 시 리다이렉트
+                    window.location.href = data.redirect;
+                } else {
+                    // 로그인 실패 처리
+                    alert(data.detail || "로그인에 실패했습니다. 학번과 비밀번호를 확인해주세요.");
+                    loading.classList.add('hidden'); // 로딩 숨기기
+                    passwordInput.value = ''; // 비번 초기화
+                    passwordInput.focus();
+                }
+            } catch (error) {
+                console.error('Login Error:', error);
+                alert("서버 연결 중 오류가 발생했습니다.");
+                loading.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+
+</html>

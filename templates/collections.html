@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>지식베이스 관리 대시보드 - 컬렉션</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          boxShadow: {
+            soft: '0 10px 30px rgba(15, 23, 42, 0.08)',
+            panel: '0 18px 40px rgba(15, 23, 42, 0.12)'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: Pretendard, 'Noto Sans KR', system-ui, sans-serif; }
+    .thin-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+    .thin-scrollbar::-webkit-scrollbar-thumb { background: rgba(148,163,184,.45); border-radius: 999px; }
+    .thin-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar-item[data-active="true"] {
+      background: rgb(15 23 42);
+      color: white;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    }
+    .sidebar-item[data-active="true"] .sidebar-icon {
+      background: rgba(255,255,255,.10);
+      color: white;
+    }
+    .sidebar-item[data-active="true"] .sidebar-sub {
+      color: rgb(203 213 225);
+    }
+    .subtab-btn[data-active="true"] {
+      background: rgb(37 99 235);
+      color: white;
+      border-color: rgb(37 99 235);
+    }
+    .view-panel.hidden,
+    .subtab-panel.hidden { display: none; }
+    .modal-hidden { display: none; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-900">
+  <div class="min-h-screen lg:flex">
+    <div id="mobileSidebarBackdrop" class="fixed inset-0 z-40 hidden bg-slate-900/40 lg:hidden"></div>
+
+    <aside id="sidebar" class="fixed left-0 top-0 z-50 flex h-full w-72 -translate-x-full flex-col border-r border-slate-200 bg-white transition-transform duration-300 lg:static lg:translate-x-0">
+      <div class="px-5 py-6 border-b border-slate-200">
+        <div class="flex items-center gap-3">
+          <div class="h-12 w-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-soft">
+            <i class="fas fa-graduation-cap"></i>
+          </div>
+          <div>
+            <div class="text-lg font-extrabold tracking-tight">한림대학교 AI 튜터</div>
+            <div class="text-xs text-slate-500">Knowledge Base Console</div>
+          </div>
+        </div>
+        <div class="mt-5 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <div class="text-xs text-slate-500">현재 사용자</div>
+          <div class="mt-1 text-lg font-bold">admin</div>
+          <div class="mt-1 text-xs text-slate-500">컬렉션/문서 관리 사용 가능</div>
+        </div>
+      </div>
+
+      <div class="px-4 py-6 flex-1 flex flex-col">
+        <div class="px-2 text-xs font-semibold tracking-[0.24em] text-slate-400 uppercase">Menu</div>
+        <nav class="mt-4 space-y-2">
+          <a class="sidebar-item flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left text-slate-900 hover:bg-slate-50" data-active="true" href="/rag/collections">
+            <span class="sidebar-icon flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100"><i class="fas fa-layer-group"></i></span>
+            <span>
+              <span class="block text-sm font-semibold">컬렉션</span>
+              <span class="sidebar-sub block text-xs text-slate-500">/rag/collections</span>
+            </span>
+          </a>
+          <a class="sidebar-item flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left text-slate-900 hover:bg-slate-50" data-active="false" href="/rag/documents">
+            <span class="sidebar-icon flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100"><i class="fas fa-file-pdf"></i></span>
+            <span>
+              <span class="block text-sm font-semibold">문서</span>
+              <span class="sidebar-sub block text-xs text-slate-500">/rag/documents</span>
+            </span>
+          </a>
+          <a class="sidebar-item flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left text-slate-900 hover:bg-slate-50" data-active="false" href="/rag/web_docs">
+            <span class="sidebar-icon flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100"><i class="fas fa-globe"></i></span>
+            <span>
+              <span class="block text-sm font-semibold">웹문서</span>
+              <span class="sidebar-sub block text-xs text-slate-500">/rag/web_docs</span>
+            </span>
+          </a>
+          <a class="sidebar-item flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left text-slate-900 hover:bg-slate-50" data-active="false" href="/rag/guideline">
+            <span class="sidebar-icon flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100"><i class="fas fa-book-open"></i></span>
+            <span>
+              <span class="block text-sm font-semibold">가이드라인</span>
+              <span class="sidebar-sub block text-xs text-slate-500">/rag/guideline</span>
+            </span>
+          </a>
+        </nav>
+
+        <div class="mt-auto pt-6"><a href="/" class="flex items-center justify-center gap-2 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-200"><i class="fas fa-right-from-bracket"></i>메인으로</a></div>
+        <div class="mt-auto pt-6"><a href="/logout" class="flex items-center justify-center gap-2 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-200"><i class="fas fa-right-from-bracket"></i>로그아웃</a></div>
+        
+      </div>
+    </aside>
+
+    <div class="flex-1 min-w-0">
+      <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
+        <div class="flex items-center justify-between gap-3 px-4 lg:px-8 py-4">
+          <div class="flex items-center gap-3 lg:gap-6 min-w-0">
+            <button id="mobileMenuOpen" type="button" class="lg:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white text-slate-700">
+              <i class="fas fa-bars"></i>
+            </button>
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="h-11 w-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                <i class="fas fa-database"></i>
+              </div>
+              <div class="min-w-0">
+                <div id="headerTitle" class="font-extrabold truncate">컬렉션 관리</div>
+                <div id="headerSub" class="text-xs text-slate-500">Knowledge Base Management</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <span id="badge" class="hidden sm:inline-flex items-center rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700">idle</span>
+            <button type="button" class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 shadow-soft">
+              <span class="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600">KB</span>
+              <span class="hidden sm:block text-right">
+                <span class="block text-sm font-semibold">관리 콘솔</span>
+                <span class="block text-xs text-slate-500">내 메뉴</span>
+              </span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main class="px-4 py-6 lg:px-8 lg:py-8">
+        <section class="mb-6 rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div id="heroBadge" class="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                <i class="fas fa-layer-group"></i>
+                컬렉션 관리
+              </div>
+              <h1 id="heroTitle" class="mt-3 text-2xl font-extrabold tracking-tight text-slate-900 lg:text-3xl">탭형 지식베이스 관리</h1>
+              <p id="heroDesc" class="mt-2 max-w-3xl text-sm leading-7 text-slate-500">현재 화면은 컬렉션 관리 전용입니다. 좌측 사이드 메뉴는 컬렉션, 문서, 웹문서 경로로 바로 이동하도록 연결되어 있습니다.</p>
+            </div>
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:min-w-[420px]">
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div class="text-xs text-slate-500">전체 컬렉션</div>
+                <div id="collectionsSummaryCount" class="mt-2 text-2xl font-bold text-slate-900">-</div>
+                <div class="mt-1 text-xs text-slate-500">활성 상태 기준</div>
+              </div>
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div class="text-xs text-slate-500">색인 문서</div>
+                <div class="mt-2 text-2xl font-bold text-slate-900">3,284</div>
+                <div class="mt-1 text-xs text-slate-500">최근 갱신 포함</div>
+              </div>
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div class="text-xs text-slate-500">등록 Alias</div>
+                <div id="aliasesSummaryCount" class="mt-2 text-2xl font-bold text-slate-900">-</div>
+                <div class="mt-1 text-xs text-slate-500">운영 중</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="collections" class="view-panel space-y-6">
+          <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+            <div class="thin-scrollbar flex gap-2 overflow-x-auto pb-1">
+              <button class="subtab-btn shrink-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700" data-group="collections" data-tab="create" data-active="true"><i class="fas fa-plus mr-2"></i>생성</button>
+              <button class="subtab-btn shrink-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700" data-group="collections" data-tab="list" data-active="false"><i class="fas fa-layer-group mr-2"></i>목록</button>
+              <button class="subtab-btn shrink-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700" data-group="collections" data-tab="alias" data-active="false"><i class="fas fa-link mr-2"></i>Alias</button>
+              <button class="subtab-btn shrink-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700" data-group="collections" data-tab="tools" data-active="false"><i class="fas fa-wrench mr-2"></i>유틸리티</button>
+              <button class="subtab-btn shrink-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700" data-group="collections" data-tab="results" data-active="false"><i class="fas fa-terminal mr-2"></i>결과</button>
+            </div>
+          </div>
+
+          
+          <section class="subtab-panel" data-group="collections" data-panel="create">
+            <div class="grid gap-6 xl:grid-cols-[1.15fr_.85fr]">
+              <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+                <div class="mb-5 flex items-center justify-between gap-3">
+                  <div>
+                    <h2 class="text-lg font-bold text-slate-900">컬렉션 생성</h2>
+                    <p class="mt-1 text-sm text-slate-500">첫 번째 대시보드 디자인을 유지하면서 컬렉션 생성 API만 두 번째 스펙으로 연결했습니다.</p>
+                  </div>
+                  <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">API 연결됨</span>
+                </div>
+
+                <div class="space-y-4">
+                  <div class="grid gap-4 sm:grid-cols-2">
+                    <label class="block">
+                      <span class="mb-2 block text-sm font-medium text-slate-700">컬렉션 이름</span>
+                      <input id="createCollectionName" type="text" placeholder="ex) admissions-2026" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-500" />
+                    </label>
+                    <label class="block">
+                      <span class="mb-2 block text-sm font-medium text-slate-700">도메인</span>
+                      <input id="createCollectionDomain" type="text" placeholder="ex) admissions" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-500" />
+                    </label>
+                  </div>
+
+                  <label class="block">
+                    <span class="mb-2 block text-sm font-medium text-slate-700">설명</span>
+                    <textarea id="createCollectionDescription" rows="4" placeholder="입학 관련 문서 인덱스" class="w-full rounded-[22px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500"></textarea>
+                  </label>
+
+                  <div class="rounded-[24px] border border-slate-200 bg-slate-50 p-4">
+                    <div class="mb-2 text-sm font-semibold text-slate-700">생성될 Metadata 미리보기</div>
+                    <pre id="metadataPreview" class="overflow-auto whitespace-pre-wrap break-words rounded-2xl bg-white p-4 text-sm text-slate-700">{
+  "engine": "cosine",
+  "domain": "",
+  "description": ""
+}</pre>
+                  </div>
+
+                  <div class="flex flex-wrap items-center gap-3 pt-2">
+                    <button id="btnCreateCollection" type="button" class="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800">컬렉션 생성</button>
+                    <button id="btnPreviewMetadata" type="button" class="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100">JSON 미리보기 갱신</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="space-y-6">
+                <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+                  <h3 class="text-base font-bold text-slate-900">요청 바디</h3>
+                  <div class="mt-4 rounded-2xl bg-slate-950 p-4 text-sm text-emerald-300">
+                    POST /api/db/collections
+                  </div>
+                  <div class="mt-3 text-sm leading-6 text-slate-500">
+                    <div>name</div>
+                    <div>metadata.engine = cosine</div>
+                    <div>metadata.domain</div>
+                    <div>metadata.description</div>
+                  </div>
+                </div>
+                <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+                  <h3 class="text-base font-bold text-slate-900">연동 상태</h3>
+                  <div class="mt-4 space-y-3 text-sm text-slate-600">
+                    <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>생성 API</span><span class="font-semibold text-emerald-700">/api/db/collections</span></div>
+                    <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>목록 자동 갱신</span><span class="font-semibold text-sky-700">enabled</span></div>
+                    <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>Alias select 동기화</span><span class="font-semibold text-sky-700">enabled</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+
+
+          <section class="subtab-panel hidden" data-group="collections" data-panel="list">
+            <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+              <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <h2 class="text-lg font-bold text-slate-900">컬렉션 목록</h2>
+                  <p class="mt-1 text-sm text-slate-500">첫 번째 디자인 카드 레이아웃 위에 두 번째 API의 목록/삭제/count 기능을 올렸습니다.</p>
+                </div>
+                <div class="flex flex-col gap-3 sm:flex-row">
+                  <button id="btnListCollections" type="button" class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-50">목록 새로고침</button>
+                </div>
+              </div>
+
+              <div id="collectionsList" class="mt-5 grid gap-4 xl:grid-cols-2"></div>
+            </div>
+          </section>
+
+
+          
+          <section class="subtab-panel hidden" data-group="collections" data-panel="alias">
+            <div class="grid gap-6 lg:grid-cols-[.95fr_1.05fr]">
+              <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+                <h2 class="text-lg font-bold text-slate-900">Alias 관리</h2>
+                <p class="mt-1 text-sm text-slate-500">`/api/aliases/set`, `/api/aliases/delete`, `/api/aliases`를 첫 번째 화면에 그대로 연결했습니다.</p>
+                <div class="mt-5 space-y-4">
+                  <label class="block">
+                    <span class="mb-2 block text-sm font-medium text-slate-700">대상 컬렉션</span>
+                    <select id="aliasCollectionName" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-blue-500">
+                      <option value="">컬렉션을 선택하세요</option>
+                    </select>
+                  </label>
+                  <label class="block">
+                    <span class="mb-2 block text-sm font-medium text-slate-700">Alias</span>
+                    <input id="aliasName" type="text" placeholder="ex) admissions, entrance, 모집요강" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-blue-500" />
+                  </label>
+                  <div class="flex flex-wrap gap-3 pt-2">
+                    <button id="btnSetAlias" type="button" class="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800">Alias 저장</button>
+                    <button id="btnListAliases" type="button" class="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100">Alias 목록 새로고침</button>
+                  </div>
+                </div>
+              </div>
+              <div class="space-y-6">
+                <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+                  <h3 class="text-lg font-bold text-slate-900">Alias 삭제</h3>
+                  <div class="mt-4 space-y-4">
+                    <label class="block">
+                      <span class="mb-2 block text-sm font-medium text-slate-700">삭제할 Alias</span>
+                      <input id="deleteAliasName" type="text" placeholder="ex) admissions" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-blue-500" />
+                    </label>
+                    <button id="btnDeleteAlias" type="button" class="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-semibold text-rose-700 hover:bg-rose-100">Alias 삭제</button>
+                  </div>
+                </div>
+                <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+                  <div class="flex items-center justify-between gap-3">
+                    <h3 class="text-lg font-bold text-slate-900">현재 Alias 목록</h3>
+                    <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">live</span>
+                  </div>
+                  <div id="aliasesList" class="mt-4 space-y-3 text-sm"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+
+          
+          <section class="subtab-panel hidden" data-group="collections" data-panel="tools">
+            <div class="grid gap-6 xl:grid-cols-2">
+              <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+                <div class="flex items-center justify-between gap-3">
+                  <div>
+                    <h2 class="text-lg font-bold text-slate-900">컬렉션 Count 조회</h2>
+                    <p class="mt-1 text-sm text-slate-500">GET /api/db/collections/:name/count</p>
+                  </div>
+                  <i class="fas fa-chart-column text-blue-600"></i>
+                </div>
+                <div class="mt-5 space-y-4">
+                  <select id="countCollectionName" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-blue-500">
+                    <option value="">컬렉션을 선택하세요</option>
+                  </select>
+                  <button id="btnCountCollection" type="button" class="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100">문서 수 조회</button>
+                  <div id="countResultCard" class="rounded-[24px] border border-dashed border-slate-300 px-4 py-6 text-sm leading-7 text-slate-500">아직 조회된 count 결과가 없습니다.</div>
+                </div>
+              </div>
+
+              <div class="rounded-[28px] border border-rose-200 bg-white p-5 shadow-soft lg:p-6">
+                <div class="flex items-center justify-between gap-3">
+                  <div>
+                    <h2 class="text-lg font-bold text-slate-900">컬렉션 삭제</h2>
+                    <p class="mt-1 text-sm text-slate-500">DELETE /api/db/collections/:name</p>
+                  </div>
+                  <i class="fas fa-trash text-rose-600"></i>
+                </div>
+                <div class="mt-5 space-y-4">
+                  <select id="deleteCollectionName" class="w-full rounded-2xl border border-rose-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-rose-400">
+                    <option value="">컬렉션을 선택하세요</option>
+                  </select>
+                  <button id="btnDeleteCollection" type="button" class="rounded-2xl bg-rose-600 px-5 py-3 text-sm font-semibold text-white hover:bg-rose-700">컬렉션 삭제</button>
+                  <div class="rounded-[24px] border border-rose-100 bg-rose-50 px-4 py-4 text-sm text-rose-700">삭제 후 컬렉션 목록과 선택 박스는 자동으로 갱신됩니다.</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+
+          
+          <section class="subtab-panel hidden" data-group="collections" data-panel="results">
+            <div class="grid gap-6 xl:grid-cols-[.85fr_1.15fr]">
+              <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+                <div class="flex items-center justify-between gap-3">
+                  <div>
+                    <h2 class="text-lg font-bold text-slate-900">작업 로그</h2>
+                    <p class="mt-1 text-sm text-slate-500">컬렉션 / Alias 작업 내역</p>
+                  </div>
+                  <button id="btnClearActivity" type="button" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">로그 비우기</button>
+                </div>
+                <div id="collections-result-list" class="mt-5 space-y-3">
+                  <div class="rounded-2xl border border-dashed border-slate-300 px-4 py-6 text-sm leading-7 text-slate-500">아직 실행된 작업이 없습니다.</div>
+                </div>
+              </div>
+              <div class="rounded-[28px] border border-slate-200 bg-slate-950 p-5 shadow-soft lg:p-6">
+                <div class="mb-3 flex items-center justify-between">
+                  <div>
+                    <h2 class="text-sm font-semibold text-white">Raw API Result</h2>
+                    <p class="mt-1 text-xs text-slate-400">마지막 응답 원문</p>
+                  </div>
+                  <button id="btnClearResult" type="button" class="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-700">비우기</button>
+                </div>
+                <pre id="resultBox" class="max-h-[520px] overflow-auto whitespace-pre-wrap break-words text-sm text-emerald-300 thin-scrollbar">아직 실행 결과가 없습니다.</pre>
+              </div>
+            </div>
+          </section>
+
+        </section>
+
+
+          <section class="subtab-panel hidden" data-group="webdocs" data-panel="sources">
+            <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+              <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <h2 class="text-lg font-bold text-slate-900">웹 소스 목록</h2>
+                  <p class="mt-1 text-sm text-slate-500">도메인, sitemap, 스케줄, 상태를 한눈에 보이도록 테이블로 정리했습니다.</p>
+                </div>
+                <input type="text" placeholder="도메인 또는 컬렉션 검색" class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm placeholder:text-slate-400 focus:border-blue-500" />
+              </div>
+              <div class="mt-5 overflow-hidden rounded-3xl border border-slate-200">
+                <div class="thin-scrollbar overflow-x-auto">
+                  <table class="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead class="bg-slate-50 text-slate-600">
+                      <tr>
+                        <th class="px-4 py-3 text-left font-semibold">소스</th>
+                        <th class="px-4 py-3 text-left font-semibold">컬렉션</th>
+                        <th class="px-4 py-3 text-left font-semibold">주기</th>
+                        <th class="px-4 py-3 text-left font-semibold">상태</th>
+                        <th class="px-4 py-3 text-left font-semibold">마지막 수집</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 bg-white">
+                      <tr><td class="px-4 py-3">admission.hallym.ac.kr</td><td class="px-4 py-3">admissions-2026</td><td class="px-4 py-3">매일</td><td class="px-4 py-3"><span class="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">정상</span></td><td class="px-4 py-3">오늘 08:30</td></tr>
+                      <tr><td class="px-4 py-3">scholarship.hallym.ac.kr</td><td class="px-4 py-3">scholarship-center</td><td class="px-4 py-3">매주</td><td class="px-4 py-3"><span class="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700">동기화 예약</span></td><td class="px-4 py-3">어제 21:10</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="subtab-panel hidden" data-group="webdocs" data-panel="sync">
+            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <button onclick="pushResult('webdocs-result-list', '전체 웹 소스를 즉시 동기화합니다.'); setSubTab('webdocs','results');" class="rounded-[26px] border border-slate-200 bg-white p-5 text-left shadow-soft hover:bg-slate-50"><div class="h-12 w-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center"><i class="fas fa-rotate"></i></div><div class="mt-4 font-semibold text-slate-900">전체 동기화</div><div class="mt-2 text-sm text-slate-500 leading-6">등록된 웹 소스를 다시 수집합니다.</div></button>
+              <button onclick="pushResult('webdocs-result-list', '실패 URL 재시도를 시작했습니다.'); setSubTab('webdocs','results');" class="rounded-[26px] border border-slate-200 bg-white p-5 text-left shadow-soft hover:bg-slate-50"><div class="h-12 w-12 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center"><i class="fas fa-arrow-rotate-right"></i></div><div class="mt-4 font-semibold text-slate-900">실패 URL 재시도</div><div class="mt-2 text-sm text-slate-500 leading-6">수집 실패했던 URL만 다시 시도합니다.</div></button>
+              <button onclick="pushResult('webdocs-result-list', '중복 URL 정리를 완료했습니다.'); setSubTab('webdocs','results');" class="rounded-[26px] border border-slate-200 bg-white p-5 text-left shadow-soft hover:bg-slate-50"><div class="h-12 w-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center"><i class="fas fa-filter-circle-xmark"></i></div><div class="mt-4 font-semibold text-slate-900">중복 정리</div><div class="mt-2 text-sm text-slate-500 leading-6">정규화 규칙으로 중복 URL을 제거합니다.</div></button>
+              <button onclick="pushResult('webdocs-result-list', '차단 규칙 검증을 시작했습니다.'); setSubTab('webdocs','results');" class="rounded-[26px] border border-slate-200 bg-white p-5 text-left shadow-soft hover:bg-slate-50"><div class="h-12 w-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center"><i class="fas fa-ban"></i></div><div class="mt-4 font-semibold text-slate-900">차단 규칙 점검</div><div class="mt-2 text-sm text-slate-500 leading-6">제외 패턴과 robots 규칙을 검증합니다.</div></button>
+            </div>
+          </section>
+
+          <section class="subtab-panel hidden" data-group="webdocs" data-panel="results">
+            <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <h2 class="text-lg font-bold text-slate-900">웹 작업 결과</h2>
+                  <p class="mt-1 text-sm text-slate-500">수집/동기화/정리 요청 결과가 여기에 누적됩니다.</p>
+                </div>
+                <button type="button" onclick="document.getElementById('webdocs-result-list').innerHTML='';" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">비우기</button>
+              </div>
+              <div id="webdocs-result-list" class="mt-5 space-y-3">
+                <div class="rounded-2xl border border-dashed border-slate-300 px-4 py-6 text-sm leading-7 text-slate-500">아직 실행된 작업이 없습니다.</div>
+              </div>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div id="editCollectionModal" class="fixed inset-0 z-[70] hidden items-center justify-center bg-slate-900/50 px-4 py-6" aria-hidden="true">
+    <div class="w-full max-w-3xl rounded-[28px] border border-slate-200 bg-white shadow-panel">
+      <div class="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-4 lg:px-6">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">컬렉션 메타데이터 수정</h2>
+          <p class="mt-1 text-sm text-slate-500">PATCH /api/db/collections/:name 으로 metadata를 갱신합니다.</p>
+        </div>
+        <button id="btnCloseEditCollectionModal" type="button" class="h-11 w-11 rounded-2xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="grid gap-6 p-5 lg:grid-cols-[1.05fr_.95fr] lg:px-6 lg:py-6">
+        <div class="space-y-4">
+          <label class="block">
+            <span class="mb-2 block text-sm font-medium text-slate-700">컬렉션 이름</span>
+            <input id="editCollectionName" type="text" readonly class="w-full rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-700 outline-none" />
+          </label>
+
+          <div class="grid gap-4 sm:grid-cols-2">
+            <label class="block">
+              <span class="mb-2 block text-sm font-medium text-slate-700">engine</span>
+              <input id="editCollectionEngine" type="text" placeholder="ex) cosine" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-500" />
+            </label>
+            <label class="block">
+              <span class="mb-2 block text-sm font-medium text-slate-700">domain</span>
+              <input id="editCollectionDomain" type="text" placeholder="ex) admissions" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-500" />
+            </label>
+          </div>
+
+          <label class="block">
+            <span class="mb-2 block text-sm font-medium text-slate-700">description</span>
+            <textarea id="editCollectionDescription" rows="4" placeholder="컬렉션 설명" class="w-full rounded-[22px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500"></textarea>
+          </label>
+
+          <label class="block">
+            <span class="mb-2 block text-sm font-medium text-slate-700">추가 Metadata (JSON Object)</span>
+            <textarea id="editCollectionExtraMetadata" rows="8" spellcheck="false" placeholder='{
+  "owner": "admin"
+}' class="w-full rounded-[22px] border border-slate-200 bg-white px-4 py-3 font-mono text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500"></textarea>
+          </label>
+        </div>
+
+        <div class="space-y-4">
+          <div class="rounded-[24px] border border-slate-200 bg-slate-50 p-4">
+            <div class="mb-2 text-sm font-semibold text-slate-700">전송될 Metadata 미리보기</div>
+            <pre id="editMetadataPreview" class="overflow-auto whitespace-pre-wrap break-words rounded-2xl bg-white p-4 text-sm text-slate-700 thin-scrollbar">{}</pre>
+          </div>
+
+          <div class="rounded-[24px] border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+            <div class="font-semibold text-slate-800">주의</div>
+            <div class="mt-2">수정 요청은 metadata 전체를 다시 저장하는 방식입니다.</div>
+            <div>기존 key를 유지하려면 추가 Metadata JSON에도 함께 포함해서 저장하세요.</div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3 pt-2">
+            <button id="btnSaveCollectionMetadata" type="button" class="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800">메타데이터 저장</button>
+            <button id="btnRefreshEditMetadataPreview" type="button" class="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100">미리보기 갱신</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+
+    const sidebar = document.getElementById('sidebar');
+    const mobileMenuOpen = document.getElementById('mobileMenuOpen');
+    const mobileSidebarBackdrop = document.getElementById('mobileSidebarBackdrop');
+
+    const badge = document.getElementById('badge');
+    const resultBox = document.getElementById('resultBox');
+    const collectionsList = document.getElementById('collectionsList');
+    const aliasesList = document.getElementById('aliasesList');
+    const countResultCard = document.getElementById('countResultCard');
+    const collectionsSummaryCount = document.getElementById('collectionsSummaryCount');
+    const aliasesSummaryCount = document.getElementById('aliasesSummaryCount');
+
+    const createCollectionNameEl = document.getElementById('createCollectionName');
+    const createCollectionDomainEl = document.getElementById('createCollectionDomain');
+    const createCollectionDescriptionEl = document.getElementById('createCollectionDescription');
+    const metadataPreviewEl = document.getElementById('metadataPreview');
+
+    const countCollectionNameEl = document.getElementById('countCollectionName');
+    const deleteCollectionNameEl = document.getElementById('deleteCollectionName');
+    const aliasCollectionNameEl = document.getElementById('aliasCollectionName');
+    const aliasNameEl = document.getElementById('aliasName');
+    const deleteAliasNameEl = document.getElementById('deleteAliasName');
+
+    const editCollectionModal = document.getElementById('editCollectionModal');
+    const editCollectionNameEl = document.getElementById('editCollectionName');
+    const editCollectionEngineEl = document.getElementById('editCollectionEngine');
+    const editCollectionDomainEl = document.getElementById('editCollectionDomain');
+    const editCollectionDescriptionEl = document.getElementById('editCollectionDescription');
+    const editCollectionExtraMetadataEl = document.getElementById('editCollectionExtraMetadata');
+    const editMetadataPreviewEl = document.getElementById('editMetadataPreview');
+
+    let cachedCollections = [];
+    let cachedAliases = [];
+
+    function openSidebar() {
+      sidebar.classList.remove('-translate-x-full');
+      mobileSidebarBackdrop.classList.remove('hidden');
+      document.body.classList.add('overflow-hidden');
+    }
+    function closeSidebar() {
+      if (window.innerWidth >= 1024) return;
+      sidebar.classList.add('-translate-x-full');
+      mobileSidebarBackdrop.classList.add('hidden');
+      document.body.classList.remove('overflow-hidden');
+    }
+
+    mobileMenuOpen?.addEventListener('click', openSidebar);
+    mobileSidebarBackdrop?.addEventListener('click', closeSidebar);
+    window.addEventListener('resize', () => {
+      if (window.innerWidth >= 1024) {
+        sidebar.classList.remove('-translate-x-full');
+        mobileSidebarBackdrop.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+      } else {
+        sidebar.classList.add('-translate-x-full');
+      }
+    });
+
+    function setSubTab(group, tab) {
+      document.querySelectorAll(`.subtab-btn[data-group="${group}"]`).forEach(btn => {
+        btn.dataset.active = String(btn.dataset.tab === tab);
+      });
+      document.querySelectorAll(`.subtab-panel[data-group="${group}"]`).forEach(panel => {
+        panel.classList.toggle('hidden', panel.dataset.panel !== tab);
+      });
+    }
+
+    document.querySelectorAll('.subtab-btn').forEach(btn => {
+      btn.addEventListener('click', () => setSubTab(btn.dataset.group, btn.dataset.tab));
+    });
+
+    function splitEditableMetadata(metadata) {
+      const source = metadata && typeof metadata === 'object' ? metadata : {};
+      const {
+        engine = 'cosine',
+        domain = '',
+        description = '',
+        ...extra
+      } = source;
+      return { engine, domain, description, extra };
+    }
+
+    function buildEditMetadata() {
+      let extra = {};
+      const raw = editCollectionExtraMetadataEl?.value.trim() || '';
+
+      if (raw) {
+        try {
+          extra = JSON.parse(raw);
+        } catch {
+          throw new Error('추가 Metadata JSON 형식이 올바르지 않습니다.');
+        }
+        if (!extra || typeof extra !== 'object' || Array.isArray(extra)) {
+          throw new Error('추가 Metadata는 JSON 객체여야 합니다.');
+        }
+      }
+
+      return {
+        ...extra,
+        engine: editCollectionEngineEl?.value.trim() || 'cosine',
+        domain: editCollectionDomainEl?.value.trim() || '',
+        description: editCollectionDescriptionEl?.value.trim() || '',
+      };
+    }
+
+    function updateEditMetadataPreview() {
+      if (!editMetadataPreviewEl) return;
+      try {
+        editMetadataPreviewEl.textContent = JSON.stringify(buildEditMetadata(), null, 2);
+        editMetadataPreviewEl.classList.remove('text-rose-600');
+        editMetadataPreviewEl.classList.add('text-slate-700');
+      } catch (err) {
+        editMetadataPreviewEl.textContent = String(err?.message || err);
+        editMetadataPreviewEl.classList.remove('text-slate-700');
+        editMetadataPreviewEl.classList.add('text-rose-600');
+      }
+    }
+
+    function openEditCollectionModal(name) {
+      const item = cachedCollections.find(entry => entry.name === name);
+      if (!item) {
+        appendActivity(`메타데이터 편집 대상 조회 실패: ${escapeHtml(name)}`);
+        return;
+      }
+
+      const { engine, domain, description, extra } = splitEditableMetadata(item.metadata);
+
+      editCollectionNameEl.value = item.name || '';
+      editCollectionEngineEl.value = toDisplayString(engine || 'cosine');
+      editCollectionDomainEl.value = toDisplayString(domain);
+      editCollectionDescriptionEl.value = toDisplayString(description);
+      editCollectionExtraMetadataEl.value = Object.keys(extra).length ? JSON.stringify(extra, null, 2) : '';
+      updateEditMetadataPreview();
+
+      editCollectionModal?.classList.remove('hidden');
+      editCollectionModal?.classList.add('flex');
+      editCollectionModal?.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('overflow-hidden');
+    }
+
+    function closeEditCollectionModal() {
+      editCollectionModal?.classList.add('hidden');
+      editCollectionModal?.classList.remove('flex');
+      editCollectionModal?.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('overflow-hidden');
+    }
+
+    function setStatus(state) {
+      if (!badge) return;
+      badge.textContent = state;
+      badge.className = 'hidden sm:inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold';
+      if (state === 'idle') badge.classList.add('bg-slate-100', 'text-slate-700');
+      if (state === 'loading') badge.classList.add('bg-blue-50', 'text-blue-700');
+      if (state === 'done') badge.classList.add('bg-emerald-50', 'text-emerald-700');
+      if (state === 'error') badge.classList.add('bg-rose-50', 'text-rose-700');
+    }
+
+    function showResult(data) {
+      if (!resultBox) return;
+      resultBox.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+    }
+
+    function pushResult(targetId, message) {
+      const target = document.getElementById(targetId);
+      if (!target) return;
+      const empty = target.querySelector('.border-dashed');
+      if (empty) empty.remove();
+      const item = document.createElement('div');
+      item.className = 'rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700';
+      item.innerHTML = `
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="font-semibold text-slate-900">작업 기록</div>
+            <div class="mt-1 leading-6">${message}</div>
+          </div>
+          <span class="text-xs text-slate-400 whitespace-nowrap">방금</span>
+        </div>
+      `;
+      target.prepend(item);
+    }
+
+    function appendActivity(message) {
+      pushResult('collections-result-list', message);
+    }
+
+    function toDisplayString(value) {
+      if (value == null) return '';
+      if (typeof value === 'string') return value;
+      if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+      try {
+        return JSON.stringify(value, null, 2);
+      } catch {
+        return String(value);
+      }
+    }
+
+    function escapeHtml(s) {
+      return toDisplayString(s)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function escapeJs(s) {
+      return String(s ?? "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+    }
+
+    async function requestJson(url, options = {}) {
+      const res = await fetch(url, options);
+      const text = await res.text();
+      let data = {};
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch {
+          data = { ok: res.ok, raw: text };
+        }
+      } else {
+        data = { ok: res.ok };
+      }
+
+      if (!res.ok || data?.ok === false) {
+        throw new Error(data?.error || data?.message || `HTTP ${res.status}`);
+      }
+      return data;
+    }
+
+    function buildMetadata() {
+      return {
+        engine: 'cosine',
+        domain: createCollectionDomainEl?.value.trim() || '',
+        description: createCollectionDescriptionEl?.value.trim() || '',
+      };
+    }
+
+    function updateMetadataPreview() {
+      if (metadataPreviewEl) {
+        metadataPreviewEl.textContent = JSON.stringify(buildMetadata(), null, 2);
+      }
+    }
+
+    function normalizeCollectionItem(item) {
+      if (typeof item === 'string') {
+        return { name: item, metadata: null };
+      }
+      if (item && typeof item === 'object') {
+        return {
+          name: item.name ?? item.collection ?? item.collection_name ?? '',
+          metadata: item.metadata ?? null,
+        };
+      }
+      return { name: String(item ?? ''), metadata: null };
+    }
+
+    function renderCollectionSelectOptions(selectEl, items, placeholder = '컬렉션을 선택하세요') {
+      if (!selectEl) return;
+      const currentValue = selectEl.value;
+      const options = [
+        `<option value="">${escapeHtml(placeholder)}</option>`,
+        ...items
+          .filter(item => item.name)
+          .map(item => `<option value="${escapeHtml(item.name)}">${escapeHtml(item.name)}</option>`)
+      ];
+      selectEl.innerHTML = options.join('');
+      if (items.some(item => item.name === currentValue)) {
+        selectEl.value = currentValue;
+      }
+    }
+
+    function syncCollectionSelectors(items) {
+      renderCollectionSelectOptions(countCollectionNameEl, items, '컬렉션을 선택하세요');
+      renderCollectionSelectOptions(deleteCollectionNameEl, items, '컬렉션을 선택하세요');
+      renderCollectionSelectOptions(aliasCollectionNameEl, items, '컬렉션을 선택하세요');
+    }
+
+    function updateSummaryCards() {
+      if (collectionsSummaryCount) collectionsSummaryCount.textContent = String(cachedCollections.length);
+      if (aliasesSummaryCount) aliasesSummaryCount.textContent = String(cachedAliases.length);
+    }
+
+    function renderCollections(list) {
+      const items = (Array.isArray(list) ? list : []).map(normalizeCollectionItem).filter(item => item.name);
+      cachedCollections = items;
+      syncCollectionSelectors(items);
+      updateSummaryCards();
+
+      if (!collectionsList) return;
+      if (items.length === 0) {
+        collectionsList.innerHTML = `
+          <div class="xl:col-span-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-500">
+            컬렉션이 없습니다.
+          </div>
+        `;
+        return;
+      }
+
+      collectionsList.innerHTML = items.map(item => {
+        const metadata = item.metadata ?? {};
+        const domain = metadata?.domain || '-';
+        const description = metadata?.description || '-';
+        const engine = metadata?.engine || '-';
+
+        return `
+          <article class="rounded-[24px] border border-slate-200 bg-slate-50 p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <h3 class="text-base font-semibold text-slate-900">${escapeHtml(item.name)}</h3>
+                <p class="mt-1 text-sm text-slate-500">${escapeHtml(description)}</p>
+              </div>
+              <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">active</span>
+            </div>
+            <div class="mt-4 grid grid-cols-3 gap-3 text-sm">
+              <div class="rounded-2xl border border-slate-200 bg-white p-3"><div class="text-slate-500">engine</div><div class="mt-1 font-semibold text-slate-900">${escapeHtml(engine)}</div></div>
+              <div class="rounded-2xl border border-slate-200 bg-white p-3"><div class="text-slate-500">domain</div><div class="mt-1 font-semibold text-slate-900">${escapeHtml(domain)}</div></div>
+              <div class="rounded-2xl border border-slate-200 bg-white p-3"><div class="text-slate-500">name</div><div class="mt-1 font-semibold text-slate-900 truncate">${escapeHtml(item.name)}</div></div>
+            </div>
+            <details class="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+              <summary class="cursor-pointer text-sm font-medium text-slate-800">상세 메타데이터</summary>
+              <pre class="mt-3 overflow-auto rounded-xl bg-slate-900 p-3 text-xs text-emerald-300 thin-scrollbar">${escapeHtml(JSON.stringify(metadata ?? {}, null, 2))}</pre>
+            </details>
+            <div class="mt-4 flex flex-wrap gap-2">
+              <button type="button" data-action="edit-metadata" data-name="${escapeHtml(item.name)}" class="rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700">metadata edit</button>
+              <button type="button" data-action="count" data-name="${escapeHtml(item.name)}" class="rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-800 ring-1 ring-slate-200 hover:bg-slate-50">count</button>
+              <button type="button" data-action="delete" data-name="${escapeHtml(item.name)}" class="rounded-xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-700">delete</button>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function normalizeAliasEntries(payload) {
+      const source = payload?.aliases ?? payload?.data ?? payload;
+      const entries = [];
+
+      if (Array.isArray(source)) {
+        source.forEach(item => {
+          if (item == null) return;
+          if (typeof item === 'string') {
+            entries.push({ alias: item, collection_name: '' });
+            return;
+          }
+          if (item.alias && (item.collection_name || item.collection || item.name)) {
+            entries.push({
+              alias: item.alias,
+              collection_name: item.collection_name ?? item.collection ?? item.name ?? ''
+            });
+            return;
+          }
+          const collectionName = item.collection_name ?? item.collection ?? item.name ?? '';
+          if (Array.isArray(item.aliases)) {
+            item.aliases.forEach(alias => entries.push({ alias, collection_name: collectionName }));
+            return;
+          }
+          Object.entries(item).forEach(([key, value]) => {
+            if (Array.isArray(value)) {
+              value.forEach(alias => entries.push({ alias, collection_name: key }));
+            } else if (typeof value === 'string') {
+              entries.push({ alias: key, collection_name: value });
+            }
+          });
+        });
+      } else if (source && typeof source === 'object') {
+        Object.entries(source).forEach(([key, value]) => {
+          if (Array.isArray(value)) {
+            value.forEach(alias => entries.push({ alias, collection_name: key }));
+          } else if (value && typeof value === 'object') {
+            if (Array.isArray(value.aliases)) {
+              value.aliases.forEach(alias => entries.push({ alias, collection_name: value.collection_name ?? value.collection ?? key }));
+            } else {
+              entries.push({ alias: value.alias ?? key, collection_name: value.collection_name ?? value.collection ?? value.name ?? '' });
+            }
+          } else {
+            entries.push({ alias: key, collection_name: value ?? '' });
+          }
+        });
+      }
+
+      return entries.filter(item => item.alias).map(item => ({
+        alias: String(item.alias),
+        collection_name: String(item.collection_name ?? '')
+      }));
+    }
+
+    function renderAliases(payload) {
+      const entries = normalizeAliasEntries(payload);
+      cachedAliases = entries;
+      updateSummaryCards();
+      if (!aliasesList) return;
+
+      if (entries.length === 0) {
+        aliasesList.innerHTML = `
+          <div class="rounded-2xl border border-dashed border-slate-300 px-4 py-6 text-sm leading-7 text-slate-500">
+            등록된 Alias가 없습니다.
+          </div>
+        `;
+        return;
+      }
+
+      const grouped = entries.reduce((acc, item) => {
+        const key = item.collection_name || '미지정';
+        (acc[key] ||= []).push(item.alias);
+        return acc;
+      }, {});
+
+      aliasesList.innerHTML = Object.entries(grouped).map(([collectionName, aliases]) => `
+        <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <div class="font-semibold text-slate-900">${escapeHtml(collectionName)}</div>
+          <div class="mt-2 flex flex-wrap gap-2">
+            ${aliases.map(alias => `
+              <span class="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 border border-slate-200 text-slate-700">
+                ${escapeHtml(alias)}
+                <button type="button" onclick="quickDeleteAlias('${escapeJs(alias)}')" class="text-rose-600 hover:text-rose-700">
+                  <i class="fas fa-xmark"></i>
+                </button>
+              </span>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderCountResult(data, collectionName = '') {
+      if (!countResultCard) return;
+      const countValue = data?.count ?? data?.document_count ?? data?.documents ?? data?.total ?? data?.total_count ?? '-';
+      const target = collectionName || data?.name || data?.collection_name || data?.collection || countCollectionNameEl?.value || '-';
+      countResultCard.innerHTML = `
+        <div class="grid gap-3 sm:grid-cols-2">
+          <div class="rounded-2xl border border-slate-200 bg-white p-4">
+            <div class="text-xs text-slate-500">컬렉션</div>
+            <div class="mt-2 text-lg font-bold text-slate-900 break-all">${escapeHtml(target)}</div>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-4">
+            <div class="text-xs text-slate-500">문서 수</div>
+            <div class="mt-2 text-2xl font-bold text-slate-900">${escapeHtml(countValue)}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    async function loadCollections() {
+      const data = await requestJson('/api/db/collections');
+      renderCollections(data.collections || data.items || data);
+      showResult(data);
+      return data;
+    }
+
+    async function loadAliases() {
+      const data = await requestJson('/api/aliases');
+      renderAliases(data);
+      showResult(data);
+      return data;
+    }
+
+    async function quickCount(name) {
+      try {
+        setStatus('loading');
+        const data = await requestJson(`/api/db/collections/${encodeURIComponent(name)}/count`);
+        showResult(data);
+        countCollectionNameEl.value = name;
+        renderCountResult(data, name);
+        appendActivity(`Count 조회 완료: <span class="font-semibold">${escapeHtml(name)}</span>`);
+        setStatus('done');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity(`Count 조회 실패: ${escapeHtml(String(err))}`);
+        setStatus('error');
+      }
+    }
+
+    async function quickDeleteCollection(name) {
+      if (!confirm(`정말 "${name}" 컬렉션을 삭제할까요?`)) return;
+
+      try {
+        setStatus('loading');
+        const data = await requestJson(`/api/db/collections/${encodeURIComponent(name)}`, {
+          method: 'DELETE'
+        });
+        showResult(data);
+        appendActivity(`컬렉션 삭제 완료: <span class="font-semibold">${escapeHtml(name)}</span>`);
+        await loadCollections();
+        await loadAliases().catch(() => {});
+        setStatus('done');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity(`컬렉션 삭제 실패: ${escapeHtml(String(err))}`);
+        setStatus('error');
+      }
+    }
+
+    async function quickDeleteAlias(alias) {
+      try {
+        setStatus('loading');
+        const data = await requestJson('/api/aliases/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ alias })
+        });
+        showResult(data);
+        deleteAliasNameEl.value = alias;
+        appendActivity(`Alias 삭제 완료: <span class="font-semibold">${escapeHtml(alias)}</span>`);
+        await loadAliases();
+        setStatus('done');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity(`Alias 삭제 실패: ${escapeHtml(String(err))}`);
+        setStatus('error');
+      }
+    }
+
+    document.getElementById('btnPreviewMetadata')?.addEventListener('click', updateMetadataPreview);
+    document.getElementById('btnRefreshEditMetadataPreview')?.addEventListener('click', updateEditMetadataPreview);
+    document.getElementById('btnCloseEditCollectionModal')?.addEventListener('click', closeEditCollectionModal);
+    collectionsList?.addEventListener('click', async (event) => {
+      const actionButton = event.target.closest('[data-action][data-name]');
+      if (!actionButton || !collectionsList.contains(actionButton)) return;
+
+      const action = actionButton.dataset.action;
+      const name = actionButton.dataset.name || '';
+      if (!name) return;
+
+      if (action === 'edit-metadata') {
+        openEditCollectionModal(name);
+        return;
+      }
+      if (action === 'count') {
+        await quickCount(name);
+        return;
+      }
+      if (action === 'delete') {
+        await quickDeleteCollection(name);
+      }
+    });
+    closeEditCollectionModal();
+    editCollectionModal?.addEventListener('click', (event) => {
+      if (event.target === editCollectionModal) closeEditCollectionModal();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !editCollectionModal?.classList.contains('modal-hidden')) {
+        closeEditCollectionModal();
+      }
+    });
+    document.getElementById('btnClearActivity')?.addEventListener('click', () => {
+      const target = document.getElementById('collections-result-list');
+      if (!target) return;
+      target.innerHTML = '<div class="rounded-2xl border border-dashed border-slate-300 px-4 py-6 text-sm leading-7 text-slate-500">아직 실행된 작업이 없습니다.</div>';
+    });
+    document.getElementById('btnClearResult')?.addEventListener('click', () => {
+      if (resultBox) resultBox.textContent = '아직 실행 결과가 없습니다.';
+    });
+
+    document.getElementById('btnCreateCollection')?.addEventListener('click', async () => {
+      try {
+        setStatus('loading');
+
+        const name = createCollectionNameEl.value.trim();
+        if (!name) throw new Error('컬렉션 이름을 입력하세요.');
+
+        const payload = { name, metadata: buildMetadata() };
+        const data = await requestJson('/api/db/collections', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        showResult(data);
+        appendActivity(`컬렉션 생성 완료: <span class="font-semibold">${escapeHtml(name)}</span>`);
+        createCollectionNameEl.value = '';
+        createCollectionDomainEl.value = '';
+        createCollectionDescriptionEl.value = '';
+        updateMetadataPreview();
+
+        await loadCollections();
+        setStatus('done');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity(`컬렉션 생성 실패: ${escapeHtml(String(err))}`);
+        setStatus('error');
+      }
+    });
+
+    document.getElementById('btnSaveCollectionMetadata')?.addEventListener('click', async () => {
+      try {
+        setStatus('loading');
+
+        const name = editCollectionNameEl.value.trim();
+        if (!name) throw new Error('수정할 컬렉션 이름이 없습니다.');
+
+        const payload = { metadata: buildEditMetadata() };
+        const data = await requestJson(`/api/db/collections/${encodeURIComponent(name)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        showResult(data);
+        appendActivity(`컬렉션 메타데이터 수정 완료: <span class="font-semibold">${escapeHtml(name)}</span>`);
+        closeEditCollectionModal();
+        await loadCollections();
+        setStatus('done');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity(`컬렉션 메타데이터 수정 실패: ${escapeHtml(String(err))}`);
+        setStatus('error');
+      }
+    });
+
+    document.getElementById('btnListCollections')?.addEventListener('click', async () => {
+      try {
+        setStatus('loading');
+        await loadCollections();
+        appendActivity('컬렉션 목록 새로고침 완료');
+        setStatus('done');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity(`컬렉션 목록 조회 실패: ${escapeHtml(String(err))}`);
+        setStatus('error');
+      }
+    });
+
+    document.getElementById('btnCountCollection')?.addEventListener('click', async () => {
+      try {
+        setStatus('loading');
+        const name = countCollectionNameEl.value.trim();
+        if (!name) throw new Error('카운트 조회할 컬렉션을 선택하세요.');
+        const data = await requestJson(`/api/db/collections/${encodeURIComponent(name)}/count`);
+        showResult(data);
+        renderCountResult(data, name);
+        appendActivity(`Count 조회 완료: <span class="font-semibold">${escapeHtml(name)}</span>`);
+        setStatus('done');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity(`Count 조회 실패: ${escapeHtml(String(err))}`);
+        setStatus('error');
+      }
+    });
+
+    document.getElementById('btnDeleteCollection')?.addEventListener('click', async () => {
+      try {
+        const name = deleteCollectionNameEl.value.trim();
+        if (!name) throw new Error('삭제할 컬렉션을 선택하세요.');
+        if (!confirm(`정말 "${name}" 컬렉션을 삭제할까요?`)) return;
+
+        setStatus('loading');
+        const data = await requestJson(`/api/db/collections/${encodeURIComponent(name)}`, {
+          method: 'DELETE'
+        });
+
+        showResult(data);
+        appendActivity(`컬렉션 삭제 완료: <span class="font-semibold">${escapeHtml(name)}</span>`);
+        await loadCollections();
+        await loadAliases().catch(() => {});
+        setStatus('done');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity(`컬렉션 삭제 실패: ${escapeHtml(String(err))}`);
+        setStatus('error');
+      }
+    });
+
+    document.getElementById('btnSetAlias')?.addEventListener('click', async () => {
+      try {
+        setStatus('loading');
+        const alias = aliasNameEl.value.trim();
+        const collection_name = aliasCollectionNameEl.value.trim();
+        if (!alias) throw new Error('Alias를 입력하세요.');
+        if (!collection_name) throw new Error('매핑할 컬렉션을 선택하세요.');
+
+        const data = await requestJson('/api/aliases/set', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ alias, collection_name })
+        });
+
+        showResult(data);
+        appendActivity(`Alias 저장 완료: <span class="font-semibold">${escapeHtml(alias)}</span> → ${escapeHtml(collection_name)}`);
+        aliasNameEl.value = '';
+        await loadAliases();
+        setStatus('done');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity(`Alias 저장 실패: ${escapeHtml(String(err))}`);
+        setStatus('error');
+      }
+    });
+
+    document.getElementById('btnDeleteAlias')?.addEventListener('click', async () => {
+      try {
+        setStatus('loading');
+        const alias = deleteAliasNameEl.value.trim();
+        if (!alias) throw new Error('삭제할 Alias를 입력하세요.');
+
+        const data = await requestJson('/api/aliases/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ alias })
+        });
+
+        showResult(data);
+        appendActivity(`Alias 삭제 완료: <span class="font-semibold">${escapeHtml(alias)}</span>`);
+        await loadAliases();
+        setStatus('done');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity(`Alias 삭제 실패: ${escapeHtml(String(err))}`);
+        setStatus('error');
+      }
+    });
+
+    document.getElementById('btnListAliases')?.addEventListener('click', async () => {
+      try {
+        setStatus('loading');
+        await loadAliases();
+        appendActivity('Alias 목록 새로고침 완료');
+        setStatus('done');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity(`Alias 목록 조회 실패: ${escapeHtml(String(err))}`);
+        setStatus('error');
+      }
+    });
+
+    createCollectionDomainEl?.addEventListener('input', updateMetadataPreview);
+    createCollectionDescriptionEl?.addEventListener('input', updateMetadataPreview);
+    editCollectionEngineEl?.addEventListener('input', updateEditMetadataPreview);
+    editCollectionDomainEl?.addEventListener('input', updateEditMetadataPreview);
+    editCollectionDescriptionEl?.addEventListener('input', updateEditMetadataPreview);
+    editCollectionExtraMetadataEl?.addEventListener('input', updateEditMetadataPreview);
+
+    setSubTab('collections', 'create');
+
+    (async function init() {
+      try {
+        updateMetadataPreview();
+        setStatus('loading');
+        await loadCollections();
+        await loadAliases().catch(() => renderAliases([]));
+        setStatus('idle');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity(`초기 로딩 실패: ${escapeHtml(String(err))}`);
+        setStatus('error');
+      }
+    })();
+
+    window.openEditCollectionModal = openEditCollectionModal;
+    window.closeEditCollectionModal = closeEditCollectionModal;
+    window.quickCount = quickCount;
+    window.quickDeleteCollection = quickDeleteCollection;
+    window.quickDeleteAlias = quickDeleteAlias;
+  </script>
+
+</body>
+</html>

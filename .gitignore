@@ -1,0 +1,61 @@
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+node_modules/
+.env
+data/
+info/
+logs/
+__pycache__/
+venv/
+
+# Environment variables
+.env
+.env.*
+
+# Local/private data
+data/
+info/
+
+# Environment variables
+.env
+.env.*
+
+# Local/private data
+data/
+info/
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Environment variables
+.env
+.env.*
+
+# Local/private data
+data/
+info/
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Environment variables
+.env
+.env.*
+
+# Local/private data
+data/
+info/
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/

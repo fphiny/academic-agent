@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>지식베이스 관리 대시보드 - 문서</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          boxShadow: {
+            soft: '0 10px 30px rgba(15, 23, 42, 0.08)',
+            panel: '0 18px 40px rgba(15, 23, 42, 0.12)'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: Pretendard, 'Noto Sans KR', system-ui, sans-serif; }
+    .thin-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+    .thin-scrollbar::-webkit-scrollbar-thumb { background: rgba(148,163,184,.45); border-radius: 999px; }
+    .thin-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar-item[data-active="true"] {
+      background: rgb(15 23 42);
+      color: white;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    }
+    .sidebar-item[data-active="true"] .sidebar-icon {
+      background: rgba(255,255,255,.10);
+      color: white;
+    }
+    .sidebar-item[data-active="true"] .sidebar-sub {
+      color: rgb(203 213 225);
+    }
+    .subtab-btn[data-active="true"] {
+      background: rgb(37 99 235);
+      color: white;
+      border-color: rgb(37 99 235);
+    }
+    .view-panel.hidden,
+    .subtab-panel.hidden { display: none; }
+
+    .doc-preview {
+      display: block;
+      max-width: 520px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: rgb(71 85 105);
+      line-height: 1.6;
+    }
+    .meta-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 220px;
+    }
+    .meta-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      width: fit-content;
+      max-width: 100%;
+      border-radius: 999px;
+      background: rgb(241 245 249);
+      padding: 6px 10px;
+      font-size: 12px;
+      color: rgb(51 65 85);
+    }
+    .meta-chip b {
+      color: rgb(15 23 42);
+      font-weight: 700;
+    }
+    .table-row-hover:hover {
+      background: rgb(248 250 252);
+    }
+
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-900">
+  <div class="min-h-screen lg:flex">
+    <div id="mobileSidebarBackdrop" class="fixed inset-0 z-40 hidden bg-slate-900/40 lg:hidden"></div>
+
+    <aside id="sidebar" class="fixed left-0 top-0 z-50 flex h-full w-72 -translate-x-full flex-col border-r border-slate-200 bg-white transition-transform duration-300 lg:static lg:translate-x-0">
+      <div class="border-b border-slate-200 px-5 py-6">
+        <div class="flex items-center gap-3">
+          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-soft">
+            <i class="fas fa-graduation-cap"></i>
+          </div>
+          <div>
+            <div class="text-lg font-extrabold tracking-tight">한림대학교 AI 튜터</div>
+            <div class="text-xs text-slate-500">Knowledge Base Console</div>
+          </div>
+        </div>
+        <div class="mt-5 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <div class="text-xs text-slate-500">현재 사용자</div>
+          <div class="mt-1 text-lg font-bold">admin</div>
+          <div class="mt-1 text-xs text-slate-500">문서 관리 화면</div>
+        </div>
+      </div>
+
+      <div class="flex flex-1 flex-col px-4 py-6">
+        <div class="px-2 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Menu</div>
+        <nav class="mt-4 space-y-2">
+          <a class="sidebar-item flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left text-slate-900 hover:bg-slate-50" data-active="false" href="/rag/collections">
+            <span class="sidebar-icon flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100"><i class="fas fa-layer-group"></i></span>
+            <span>
+              <span class="block text-sm font-semibold">컬렉션</span>
+              <span class="sidebar-sub block text-xs text-slate-500">/rag/collections</span>
+            </span>
+          </a>
+          <a class="sidebar-item flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left text-slate-900 hover:bg-slate-50" data-active="true" href="/rag/documents">
+            <span class="sidebar-icon flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100"><i class="fas fa-file-pdf"></i></span>
+            <span>
+              <span class="block text-sm font-semibold">문서</span>
+              <span class="sidebar-sub block text-xs text-slate-500">/rag/documents</span>
+            </span>
+          </a>
+          <a class="sidebar-item flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left text-slate-900 hover:bg-slate-50" data-active="false" href="/rag/web_docs">
+            <span class="sidebar-icon flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100"><i class="fas fa-globe"></i></span>
+            <span>
+              <span class="block text-sm font-semibold">웹문서</span>
+              <span class="sidebar-sub block text-xs text-slate-500">/rag/web_docs</span>
+            </span>
+          </a>
+          <a class="sidebar-item flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left text-slate-900 hover:bg-slate-50" data-active="false" href="/rag/guideline">
+            <span class="sidebar-icon flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100"><i class="fas fa-book-open"></i></span>
+            <span>
+              <span class="block text-sm font-semibold">가이드라인</span>
+              <span class="sidebar-sub block text-xs text-slate-500">/rag/guideline</span>
+            </span>
+          </a>
+        </nav>
+
+        <div class="mt-auto pt-6"><a href="/" class="flex items-center justify-center gap-2 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-200"><i class="fas fa-right-from-bracket"></i>메인으로</a></div>
+        <div class="mt-auto pt-6"><a href="/logout" class="flex items-center justify-center gap-2 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-200"><i class="fas fa-right-from-bracket"></i>로그아웃</a></div>
+      </div>
+    </aside>
+
+    <div class="min-w-0 flex-1">
+      <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
+        <div class="flex items-center justify-between gap-3 px-4 py-4 lg:px-8">
+          <div class="flex min-w-0 items-center gap-3 lg:gap-6">
+            <button id="mobileMenuOpen" type="button" class="h-10 w-10 rounded-xl border border-slate-200 bg-white text-slate-700 lg:hidden">
+              <i class="fas fa-bars"></i>
+            </button>
+            <div class="flex min-w-0 items-center gap-3">
+              <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                <i class="fas fa-file-lines"></i>
+              </div>
+              <div class="min-w-0">
+                <div id="headerTitle" class="truncate font-extrabold">문서 관리</div>
+                <div id="headerSub" class="text-xs text-slate-500">Document Ingest / Upload / Search / Read / Update / Delete</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <span id="badge" class="hidden sm:inline-flex items-center rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700">idle</span>
+            <button type="button" class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 shadow-soft">
+              <span class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 font-bold text-slate-600">KB</span>
+              <span class="hidden text-right sm:block">
+                <span class="block text-sm font-semibold">관리 콘솔</span>
+                <span class="block text-xs text-slate-500">문서 메뉴</span>
+              </span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main class="px-4 py-6 lg:px-8 lg:py-8">
+        <section class="mb-6 rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div id="heroBadge" class="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                <i class="fas fa-file-lines"></i>
+                문서 관리
+              </div>
+              <h1 id="heroTitle" class="mt-3 text-2xl font-extrabold tracking-tight text-slate-900 lg:text-3xl">두 번째 디자인 기반 문서 관리</h1>
+              <p id="heroDesc" class="mt-2 max-w-3xl text-sm leading-7 text-slate-500">현재 문서 관리 기능의 API만 가져와 두 번째 대시보드 UI에 맞게 이식했습니다. 텍스트 삽입, 파일 업로드, 검색, 전체 조회 후 JS 필터링, 수정, 삭제를 같은 화면에서 처리합니다.</p>
+            </div>
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:min-w-[420px]">
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div class="text-xs text-slate-500">사용 가능 컬렉션</div>
+                <div id="collectionsSummaryCount" class="mt-2 text-2xl font-bold text-slate-900">-</div>
+                <div class="mt-1 text-xs text-slate-500">/api/db/collections</div>
+              </div>
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div class="text-xs text-slate-500">선택 파일 수</div>
+                <div id="selectedFilesSummaryCount" class="mt-2 text-2xl font-bold text-slate-900">0</div>
+                <div class="mt-1 text-xs text-slate-500">업로드 탭 기준</div>
+              </div>
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div class="text-xs text-slate-500">최근 액션</div>
+                <div id="lastActionSummary" class="mt-2 truncate text-base font-bold text-slate-900">대기 중</div>
+                <div class="mt-1 text-xs text-slate-500">실행 로그와 동기화</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="documents" class="view-panel space-y-6">
+          <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+            <div class="thin-scrollbar flex gap-2 overflow-x-auto pb-1">
+              <button class="subtab-btn shrink-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700" data-group="documents" data-tab="ingest" data-active="true"><i class="fas fa-pen mr-2"></i>텍스트 삽입</button>
+              <button class="subtab-btn shrink-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700" data-group="documents" data-tab="upload" data-active="false"><i class="fas fa-upload mr-2"></i>파일 업로드</button>
+              <button class="subtab-btn shrink-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700" data-group="documents" data-tab="search" data-active="false"><i class="fas fa-magnifying-glass mr-2"></i>검색</button>
+              <button class="subtab-btn shrink-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700" data-group="documents" data-tab="read" data-active="false"><i class="fas fa-folder-open mr-2"></i>조회</button>
+              <button class="subtab-btn shrink-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700" data-group="documents" data-tab="delete" data-active="false"><i class="fas fa-trash mr-2"></i>삭제</button>
+              <button class="subtab-btn shrink-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700" data-group="documents" data-tab="results" data-active="false"><i class="fas fa-terminal mr-2"></i>결과</button>
+            </div>
+          </div>
+
+          <section class="subtab-panel" data-group="documents" data-panel="ingest">
+            <div class="grid gap-6 xl:grid-cols-[1.1fr_.9fr]">
+              <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+                <div class="mb-5 flex items-center justify-between gap-3">
+                  <div>
+                    <h2 class="text-lg font-bold text-slate-900">텍스트 문서 삽입</h2>
+                    <p class="mt-1 text-sm text-slate-500">본문 텍스트를 직접 입력해 chunking + embedding + DB 저장을 수행합니다.</p>
+                  </div>
+                  <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">POST</span>
+                </div>
+
+                <div class="space-y-4">
+                  <div class="grid gap-4 sm:grid-cols-2">
+                    <label class="block">
+                      <span class="mb-2 block text-sm font-medium text-slate-700">Collection</span>
+                      <select id="ingestCollection" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-500">
+                        <option value="">컬렉션을 선택하세요</option>
+                      </select>
+                    </label>
+                    <label class="block">
+                      <span class="mb-2 block text-sm font-medium text-slate-700">Doc ID</span>
+                      <input id="ingestDocId" type="text" placeholder="비워두면 자동 생성" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-500" />
+                    </label>
+                  </div>
+
+                  <div class="grid gap-4 sm:grid-cols-2">
+                    <label class="block">
+                      <span class="mb-2 block text-sm font-medium text-slate-700">문서 제목</span>
+                      <input id="ingestTitle" type="text" value="샘플 문서" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-500" />
+                    </label>
+                    <label class="block">
+                      <span class="mb-2 block text-sm font-medium text-slate-700">카테고리</span>
+                      <input id="ingestCategory" type="text" value="general" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-500" />
+                    </label>
+                  </div>
+
+                  <label class="block">
+                    <span class="mb-2 block text-sm font-medium text-slate-700">출처</span>
+                    <input id="ingestSource" type="text" value="manual_input" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-500" />
+                  </label>
+
+                  <div class="rounded-[24px] border border-slate-200 bg-slate-50 p-4">
+                    <div class="mb-2 text-sm font-semibold text-slate-700">Metadata 미리보기</div>
+                    <pre id="ingestMetadataPreview" class="overflow-auto whitespace-pre-wrap break-words rounded-2xl bg-white p-4 text-sm text-slate-700">{
+  "title": "샘플 문서",
+  "source": "manual_input",
+  "category": "general"
+}</pre>
+                  </div>
+
+                  <label class="block">
+                    <span class="mb-2 block text-sm font-medium text-slate-700">Text</span>
+                    <textarea id="ingestText" rows="10" placeholder="문서 본문을 입력하세요" class="w-full rounded-[22px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500"></textarea>
+                  </label>
+
+                  <div class="flex flex-wrap items-center gap-3 pt-2">
+                    <button id="btnIngestText" type="button" class="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800">텍스트 삽입</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="space-y-6">
+                <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+                  <h3 class="text-base font-bold text-slate-900">엔드포인트</h3>
+                  <div class="mt-4 rounded-2xl bg-slate-950 p-4 text-sm text-emerald-300">POST /api/db/documents/ingest</div>
+                  <div class="mt-3 text-sm leading-6 text-slate-500">
+                    <div>collection</div>
+                    <div>doc_id</div>
+                    <div>metadata: title / source / category</div>
+                    <div>text</div>
+                  </div>
+                </div>
+                <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+                  <h3 class="text-base font-bold text-slate-900">동작 메모</h3>
+                  <div class="mt-4 space-y-3 text-sm text-slate-600">
+                    <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>컬렉션 목록 사용</span><span class="font-semibold text-sky-700">/api/db/collections</span></div>
+                    <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>메타데이터 미리보기</span><span class="font-semibold text-sky-700">live</span></div>
+                    <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>실행 결과</span><span class="font-semibold text-emerald-700">결과 탭 누적</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="subtab-panel hidden" data-group="documents" data-panel="upload">
+            <div class="grid gap-6 xl:grid-cols-[1.1fr_.9fr]">
+              <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+                <div class="mb-5 flex items-center justify-between gap-3">
+                  <div>
+                    <h2 class="text-lg font-bold text-slate-900">파일 업로드 삽입</h2>
+                    <p class="mt-1 text-sm text-slate-500">여러 파일을 업로드해 서버에서 순차 저장합니다.</p>
+                  </div>
+                  <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">FORM-DATA</span>
+                </div>
+
+                <div class="space-y-4">
+                  <div class="grid gap-4 sm:grid-cols-2">
+                    <label class="block">
+                      <span class="mb-2 block text-sm font-medium text-slate-700">Collection</span>
+                      <select id="uploadCollection" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-500">
+                        <option value="">컬렉션을 선택하세요</option>
+                      </select>
+                    </label>
+                    <label class="block">
+                      <span class="mb-2 block text-sm font-medium text-slate-700">Doc ID Prefix</span>
+                      <input id="uploadDocId" type="text" placeholder="예: policy_doc" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-500" />
+                    </label>
+                  </div>
+
+                  <div class="grid gap-4 sm:grid-cols-2">
+                    <label class="block">
+                      <span class="mb-2 block text-sm font-medium text-slate-700">카테고리</span>
+                      <input id="uploadCategory" type="text" value="general" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-500" />
+                    </label>
+                    <label class="block">
+                      <span class="mb-2 block text-sm font-medium text-slate-700">출처</span>
+                      <input id="uploadSource" type="text" value="file_upload" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-500" />
+                    </label>
+                  </div>
+
+                  <div class="rounded-[24px] border border-slate-200 bg-slate-50 p-4">
+                    <div class="mb-2 text-sm font-semibold text-slate-700">Metadata 미리보기</div>
+                    <pre id="uploadMetadataPreview" class="overflow-auto whitespace-pre-wrap break-words rounded-2xl bg-white p-4 text-sm text-slate-700">{
+  "category": "general",
+  "source": "file_upload"
+}</pre>
+                  </div>
+
+                  <label class="block">
+                    <span class="mb-2 block text-sm font-medium text-slate-700">Files</span>
+                    <input id="uploadFile" type="file" multiple class="block w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 file:mr-4 file:rounded-xl file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-700 hover:file:bg-slate-200" />
+                  </label>
+
+                  <div id="uploadFileList" class="space-y-2"></div>
+
+                  <div class="flex flex-wrap items-center gap-3 pt-2">
+                    <button id="btnUploadFile" type="button" class="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800">파일 업로드</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="space-y-6">
+                <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+                  <h3 class="text-base font-bold text-slate-900">엔드포인트</h3>
+                  <div class="mt-4 rounded-2xl bg-slate-950 p-4 text-sm text-emerald-300">POST /api/db/documents/upload</div>
+                  <div class="mt-3 text-sm leading-6 text-slate-500">
+                    <div>multipart/form-data</div>
+                    <div>collection</div>
+                    <div>metadata(JSON)</div>
+                    <div>doc_id(optional prefix)</div>
+                    <div>files[]</div>
+                  </div>
+                </div>
+                <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+                  <h3 class="text-base font-bold text-slate-900">업로드 상태</h3>
+                  <div id="uploadStatusCard" class="mt-4 rounded-[24px] border border-dashed border-slate-300 px-4 py-6 text-sm leading-7 text-slate-500">선택된 파일이 없습니다.</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="subtab-panel hidden" data-group="documents" data-panel="search">
+            <div class="grid gap-6 xl:grid-cols-[1fr_.95fr]">
+              <div class="rounded-[28px] border border-indigo-200 bg-white p-5 shadow-soft lg:p-6">
+                <div class="mb-5 flex items-center justify-between gap-3">
+                  <div>
+                    <h2 class="text-lg font-bold text-slate-900">문서 검색</h2>
+                    <p class="mt-1 text-sm text-slate-500">벡터 유사도 검색으로 관련 문서를 찾습니다.</p>
+                  </div>
+                  <span class="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">GET</span>
+                </div>
+
+                <div class="space-y-4">
+                  <div class="grid gap-4 md:grid-cols-4">
+                    <label class="block md:col-span-2">
+                      <span class="mb-2 block text-sm font-medium text-slate-700">Collection</span>
+                      <select id="searchCollection" class="w-full rounded-2xl border border-indigo-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-indigo-500">
+                        <option value="">컬렉션을 선택하세요</option>
+                      </select>
+                    </label>
+                    <label class="block">
+                      <span class="mb-2 block text-sm font-medium text-slate-700">Top K</span>
+                      <input id="searchK" type="number" value="5" min="1" class="w-full rounded-2xl border border-indigo-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-indigo-500" />
+                    </label>
+                    <label class="block">
+                      <span class="mb-2 block text-sm font-medium text-slate-700">Where(JSON)</span>
+                      <input id="searchWhere" type="text" placeholder='예: {"category":"policy"}' class="w-full rounded-2xl border border-indigo-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-indigo-500" />
+                    </label>
+                  </div>
+
+                  <label class="block">
+                    <span class="mb-2 block text-sm font-medium text-slate-700">Query</span>
+                    <textarea id="searchQuery" rows="5" placeholder="검색어를 입력하세요" class="w-full rounded-[22px] border border-indigo-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-indigo-500"></textarea>
+                  </label>
+
+                  <div class="flex flex-wrap items-center gap-3 pt-2">
+                    <button id="btnSearchDocuments" type="button" class="rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700">검색</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+                <h3 class="text-lg font-bold text-slate-900">엔드포인트 정보</h3>
+                <div class="mt-4 rounded-2xl bg-slate-950 p-4 text-sm text-emerald-300">GET /api/db/search</div>
+                <div class="mt-4 space-y-3 text-sm text-slate-600">
+                  <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>필수</span><span class="font-semibold text-slate-900">collection, query</span></div>
+                  <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>옵션</span><span class="font-semibold text-slate-900">k, where</span></div>
+                  <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>결과 표시</span><span class="font-semibold text-sky-700">Raw JSON</span></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="subtab-panel hidden" data-group="documents" data-panel="read">
+            <div class="grid gap-6">
+              <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+                <div class="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div>
+                    <h2 class="text-lg font-bold text-slate-900">전체 문서 조회</h2>
+                    <p class="mt-1 text-sm text-slate-500">컬렉션 전체를 모두 조회한 뒤 테이블로 표시하고, 클라이언트 측 필터와 행 수정 버튼으로 빠르게 작업할 수 있습니다.</p>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">GET /api/db/documents</span>
+                    <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">POST /api/db/documents/upsert</span>
+                    <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">JS Filter</span>
+                  </div>
+                </div>
+
+                <div class="grid gap-4 md:grid-cols-4">
+                  <label class="block md:col-span-2">
+                    <span class="mb-2 block text-sm font-medium text-slate-700">Collection</span>
+                    <select id="getCollection" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-500">
+                      <option value="">컬렉션을 선택하세요</option>
+                    </select>
+                  </label>
+                  <label class="block">
+                    <span class="mb-2 block text-sm font-medium text-slate-700">Batch Size</span>
+                    <input id="getLimit" type="number" value="200" min="1" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-500" />
+                  </label>
+                  <label class="block">
+                    <span class="mb-2 block text-sm font-medium text-slate-700">Start Offset</span>
+                    <input id="getOffset" type="number" value="0" min="0" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-500" />
+                  </label>
+                </div>
+
+                <div class="mt-4 grid gap-4 lg:grid-cols-[1fr_340px]">
+                  <label class="block">
+                    <span class="mb-2 block text-sm font-medium text-slate-700">Where(JSON)</span>
+                    <textarea id="getWhere" rows="4" placeholder='예: {"doc_id":"refund_policy"}' class="w-full rounded-[22px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500"></textarea>
+                  </label>
+                  <label class="block">
+                    <span class="mb-2 block text-sm font-medium text-slate-700">테이블 필터</span>
+                    <input id="readFilterKeyword" type="text" placeholder="id, 제목, source, 내용 일부, metadata로 필터" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-500" />
+                    <div class="mt-2 text-xs leading-6 text-slate-500">컬렉션 전체를 모두 내려받은 뒤, 서버 재호출 없이 현재 rows에서 즉시 필터링합니다.</div>
+                  </label>
+                </div>
+
+                <div class="mt-5 flex flex-wrap items-center gap-3">
+                  <button id="btnGetDocuments" type="button" class="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100">전체 문서 조회</button>
+                  <button id="btnResetReadFilter" type="button" class="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">필터 초기화</button>
+                  <div id="readTableSummary" class="text-sm text-slate-500">전체 조회 전입니다.</div>
+                </div>
+              </div>
+
+              <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+                <div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                  <div>
+                    <h3 class="text-lg font-bold text-slate-900">조회 결과 테이블</h3>
+                    <p class="mt-1 text-sm text-slate-500">id / 주요 메타데이터 / 본문 미리보기 / 수정 액션을 한 번에 확인합니다.</p>
+                  </div>
+                  <div class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">rows: <span id="readRowCount">0</span></div>
+                </div>
+
+                <div id="readTableEmpty" class="rounded-2xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm leading-7 text-slate-500">
+                  아직 조회된 문서가 없습니다.
+                </div>
+
+                <div id="readTableWrap" class="hidden overflow-hidden rounded-[24px] border border-slate-200">
+                  <div class="thin-scrollbar overflow-auto">
+                    <table class="min-w-full table-auto text-left text-sm">
+                      <thead class="bg-slate-50 text-slate-700">
+                        <tr>
+                          <th class="px-4 py-3 font-semibold">No</th>
+                          <th class="px-4 py-3 font-semibold">ID</th>
+                          <th class="px-4 py-3 font-semibold">대표 정보</th>
+                          <th class="px-4 py-3 font-semibold">내용 미리보기</th>
+                          <th class="px-4 py-3 font-semibold">Metadata</th>
+                          <th class="px-4 py-3 font-semibold">관리</th>
+                        </tr>
+                      </thead>
+                      <tbody id="readTableBody" class="divide-y divide-slate-200 bg-white"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="subtab-panel hidden" data-group="documents" data-panel="delete">
+            <div class="space-y-6">
+              <div class="rounded-[28px] border border-rose-200 bg-white p-5 shadow-soft lg:p-6">
+                <div class="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div>
+                    <h2 class="text-lg font-bold text-slate-900">문서 삭제</h2>
+                    <p class="mt-1 text-sm text-slate-500">삭제 대상도 컬렉션 전체를 모두 불러온 뒤 테이블에서 필터링하고, 단건 또는 선택 삭제합니다.</p>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">DELETE /api/db/documents</span>
+                    <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">Row Delete</span>
+                  </div>
+                </div>
+
+                <div class="grid gap-4 md:grid-cols-4">
+                  <label class="block md:col-span-2">
+                    <span class="mb-2 block text-sm font-medium text-rose-900">Collection</span>
+                    <select id="deleteCollection" class="w-full rounded-2xl border border-rose-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-rose-400">
+                      <option value="">컬렉션을 선택하세요</option>
+                    </select>
+                  </label>
+                  <label class="block">
+                    <span class="mb-2 block text-sm font-medium text-rose-900">Batch Size</span>
+                    <input id="deleteLimit" type="number" value="200" min="1" class="w-full rounded-2xl border border-rose-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-rose-400" />
+                  </label>
+                  <label class="block">
+                    <span class="mb-2 block text-sm font-medium text-rose-900">Start Offset</span>
+                    <input id="deleteOffset" type="number" value="0" min="0" class="w-full rounded-2xl border border-rose-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-rose-400" />
+                  </label>
+                </div>
+
+                <div class="mt-4 grid gap-4 lg:grid-cols-[1fr_340px]">
+                  <label class="block">
+                    <span class="mb-2 block text-sm font-medium text-rose-900">Where(JSON)</span>
+                    <textarea id="deleteWhere" rows="4" placeholder='예: {"doc_id":"refund_policy"}' class="w-full rounded-[22px] border border-rose-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-rose-400"></textarea>
+                  </label>
+                  <label class="block">
+                    <span class="mb-2 block text-sm font-medium text-rose-900">테이블 필터</span>
+                    <input id="deleteFilterKeyword" type="text" placeholder="id, 제목, source, 내용 일부, metadata로 필터" class="w-full rounded-2xl border border-rose-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-rose-400" />
+                    <div class="mt-2 text-xs leading-6 text-slate-500">컬렉션 전체를 모두 내려받은 뒤 현재 rows만 즉시 필터링합니다.</div>
+                  </label>
+                </div>
+
+                <div class="mt-5 flex flex-wrap items-center gap-3">
+                  <button id="btnLoadDeleteDocuments" type="button" class="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-semibold text-rose-700 hover:bg-rose-100">삭제 대상 전체 조회</button>
+                  <button id="btnDeleteSelected" type="button" class="rounded-2xl bg-rose-600 px-5 py-3 text-sm font-semibold text-white hover:bg-rose-700">선택 삭제</button>
+                  <button id="btnResetDeleteFilter" type="button" class="rounded-2xl border border-rose-200 bg-white px-5 py-3 text-sm font-semibold text-rose-700 hover:bg-rose-50">필터 초기화</button>
+                  <div id="deleteTableSummary" class="text-sm text-slate-500">삭제 대상 전체 조회 전입니다.</div>
+                </div>
+              </div>
+
+              <div class="rounded-[28px] border border-rose-200 bg-white p-5 shadow-soft lg:p-6">
+                <div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                  <div>
+                    <h3 class="text-lg font-bold text-slate-900">삭제 대상 테이블</h3>
+                    <p class="mt-1 text-sm text-slate-500">체크박스로 다중 선택 후 삭제하거나, 행 단위 삭제 버튼을 바로 실행할 수 있습니다.</p>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600">
+                    <span class="rounded-full bg-rose-50 px-3 py-1 text-rose-700">rows: <span id="deleteRowCount">0</span></span>
+                    <span class="rounded-full bg-slate-100 px-3 py-1">selected: <span id="deleteSelectedCount">0</span></span>
+                  </div>
+                </div>
+
+                <div id="deleteTableEmpty" class="rounded-2xl border border-dashed border-rose-200 px-4 py-8 text-center text-sm leading-7 text-slate-500">
+                  아직 삭제 대상이 조회되지 않았습니다.
+                </div>
+
+                <div id="deleteTableWrap" class="hidden overflow-hidden rounded-[24px] border border-rose-200">
+                  <div class="thin-scrollbar overflow-auto">
+                    <table class="min-w-full table-auto text-left text-sm">
+                      <thead class="bg-rose-50 text-rose-900">
+                        <tr>
+                          <th class="px-4 py-3 font-semibold">
+                            <input id="deleteCheckAll" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500" />
+                          </th>
+                          <th class="px-4 py-3 font-semibold">ID</th>
+                          <th class="px-4 py-3 font-semibold">대표 정보</th>
+                          <th class="px-4 py-3 font-semibold">내용 미리보기</th>
+                          <th class="px-4 py-3 font-semibold">Metadata</th>
+                          <th class="px-4 py-3 font-semibold">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody id="deleteTableBody" class="divide-y divide-rose-100 bg-white"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="subtab-panel hidden" data-group="documents" data-panel="results">
+            <div class="grid gap-6 xl:grid-cols-[.85fr_1.15fr]">
+              <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+                <div class="flex items-center justify-between gap-3">
+                  <div>
+                    <h2 class="text-lg font-bold text-slate-900">작업 로그</h2>
+                    <p class="mt-1 text-sm text-slate-500">문서 삽입 / 업로드 / 검색 / 조회 / 삭제 작업 내역</p>
+                  </div>
+                  <button id="btnClearActivity" type="button" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">로그 비우기</button>
+                </div>
+                <div id="documents-result-list" class="mt-5 space-y-3">
+                  <div class="rounded-2xl border border-dashed border-slate-300 px-4 py-6 text-sm leading-7 text-slate-500">아직 실행된 작업이 없습니다.</div>
+                </div>
+              </div>
+              <div class="rounded-[28px] border border-slate-200 bg-slate-950 p-5 shadow-soft lg:p-6">
+                <div class="mb-3 flex items-center justify-between">
+                  <div>
+                    <h2 class="text-sm font-semibold text-white">Raw API Result</h2>
+                    <p class="mt-1 text-xs text-slate-400">마지막 응답 원문</p>
+                  </div>
+                  <button id="btnClearResult" type="button" class="rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-700">비우기</button>
+                </div>
+                <pre id="resultBox" class="thin-scrollbar max-h-[520px] overflow-auto whitespace-pre-wrap break-words text-sm text-emerald-300">아직 실행 결과가 없습니다.</pre>
+              </div>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div id="editModal" class="fixed inset-0 z-[70] hidden items-center justify-center bg-slate-900/60 px-4 py-6">
+    <div class="absolute inset-0" data-close-edit-modal="true"></div>
+    <div class="relative z-10 w-full max-w-5xl overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-panel">
+      <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4 lg:px-6">
+        <div>
+          <div class="text-lg font-bold text-slate-900">문서 수정</div>
+          <div class="mt-1 text-sm text-slate-500">본문과 metadata JSON을 수정한 뒤 upsert로 저장합니다.</div>
+        </div>
+        <button id="btnCloseEditModal" type="button" class="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+      <div class="thin-scrollbar max-h-[78vh] overflow-auto px-5 py-5 lg:px-6 lg:py-6">
+        <div class="grid gap-4 md:grid-cols-2">
+          <label class="block">
+            <span class="mb-2 block text-sm font-medium text-slate-700">Collection</span>
+            <input id="editCollectionName" type="text" readonly class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none" />
+          </label>
+          <label class="block">
+            <span class="mb-2 block text-sm font-medium text-slate-700">ID</span>
+            <input id="editDocId" type="text" readonly class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none" />
+          </label>
+        </div>
+        <div class="mt-4 grid gap-4 lg:grid-cols-[1.1fr_.9fr]">
+          <label class="block">
+            <span class="mb-2 block text-sm font-medium text-slate-700">Document</span>
+            <textarea id="editDocumentText" rows="18" class="w-full rounded-[22px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500"></textarea>
+          </label>
+          <label class="block">
+            <span class="mb-2 block text-sm font-medium text-slate-700">Metadata JSON</span>
+            <textarea id="editMetadataJson" rows="18" class="w-full rounded-[22px] border border-slate-200 bg-white px-4 py-3 font-mono text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500"></textarea>
+            <div class="mt-2 text-xs leading-6 text-slate-500">전체 metadata 객체를 그대로 수정합니다. JSON 형식이 아니면 저장되지 않습니다.</div>
+          </label>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 lg:px-6">
+        <div id="editModalHint" class="text-sm text-slate-500">수정할 문서를 선택하면 여기서 바로 편집할 수 있습니다.</div>
+        <div class="flex flex-wrap items-center gap-3">
+          <button id="btnCancelEdit" type="button" class="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">취소</button>
+          <button id="btnSaveEdit" type="button" class="rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700">수정 저장</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const sidebar = document.getElementById('sidebar');
+    const mobileMenuOpen = document.getElementById('mobileMenuOpen');
+    const mobileSidebarBackdrop = document.getElementById('mobileSidebarBackdrop');
+
+    const badge = document.getElementById('badge');
+    const resultBox = document.getElementById('resultBox');
+    const collectionsSummaryCount = document.getElementById('collectionsSummaryCount');
+    const selectedFilesSummaryCount = document.getElementById('selectedFilesSummaryCount');
+    const lastActionSummary = document.getElementById('lastActionSummary');
+    const uploadStatusCard = document.getElementById('uploadStatusCard');
+
+    const ingestCollectionEl = document.getElementById('ingestCollection');
+    const uploadCollectionEl = document.getElementById('uploadCollection');
+    const searchCollectionEl = document.getElementById('searchCollection');
+    const getCollectionEl = document.getElementById('getCollection');
+    const deleteCollectionEl = document.getElementById('deleteCollection');
+
+    const ingestTitleEl = document.getElementById('ingestTitle');
+    const ingestSourceEl = document.getElementById('ingestSource');
+    const ingestCategoryEl = document.getElementById('ingestCategory');
+    const ingestMetadataPreviewEl = document.getElementById('ingestMetadataPreview');
+
+    const uploadCategoryEl = document.getElementById('uploadCategory');
+    const uploadSourceEl = document.getElementById('uploadSource');
+    const uploadMetadataPreviewEl = document.getElementById('uploadMetadataPreview');
+    const uploadFileEl = document.getElementById('uploadFile');
+    const uploadFileListEl = document.getElementById('uploadFileList');
+    const uploadDocIdEl = document.getElementById('uploadDocId');
+
+    const readFilterKeywordEl = document.getElementById('readFilterKeyword');
+    const readTableBodyEl = document.getElementById('readTableBody');
+    const readTableWrapEl = document.getElementById('readTableWrap');
+    const readTableEmptyEl = document.getElementById('readTableEmpty');
+    const readRowCountEl = document.getElementById('readRowCount');
+    const readTableSummaryEl = document.getElementById('readTableSummary');
+
+    const deleteLimitEl = document.getElementById('deleteLimit');
+    const deleteOffsetEl = document.getElementById('deleteOffset');
+    const deleteWhereEl = document.getElementById('deleteWhere');
+    const deleteFilterKeywordEl = document.getElementById('deleteFilterKeyword');
+    const deleteTableBodyEl = document.getElementById('deleteTableBody');
+    const deleteTableWrapEl = document.getElementById('deleteTableWrap');
+    const deleteTableEmptyEl = document.getElementById('deleteTableEmpty');
+    const deleteRowCountEl = document.getElementById('deleteRowCount');
+    const deleteSelectedCountEl = document.getElementById('deleteSelectedCount');
+    const deleteTableSummaryEl = document.getElementById('deleteTableSummary');
+    const deleteCheckAllEl = document.getElementById('deleteCheckAll');
+
+    const editModalEl = document.getElementById('editModal');
+    const editCollectionNameEl = document.getElementById('editCollectionName');
+    const editDocIdEl = document.getElementById('editDocId');
+    const editDocumentTextEl = document.getElementById('editDocumentText');
+    const editMetadataJsonEl = document.getElementById('editMetadataJson');
+    const editModalHintEl = document.getElementById('editModalHint');
+
+
+    let cachedCollections = [];
+    let readRows = [];
+    let deleteRows = [];
+    let deleteSelectedIds = new Set();
+    let editingRowId = null;
+    let editingCollectionName = '';
+
+    function openSidebar() {
+      sidebar.classList.remove('-translate-x-full');
+      mobileSidebarBackdrop.classList.remove('hidden');
+      document.body.classList.add('overflow-hidden');
+    }
+
+    function closeSidebar() {
+      if (window.innerWidth >= 1024) return;
+      sidebar.classList.add('-translate-x-full');
+      mobileSidebarBackdrop.classList.add('hidden');
+      document.body.classList.remove('overflow-hidden');
+    }
+
+    mobileMenuOpen?.addEventListener('click', openSidebar);
+    mobileSidebarBackdrop?.addEventListener('click', closeSidebar);
+    window.addEventListener('resize', () => {
+      if (window.innerWidth >= 1024) {
+        sidebar.classList.remove('-translate-x-full');
+        mobileSidebarBackdrop.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+      } else {
+        sidebar.classList.add('-translate-x-full');
+      }
+    });
+
+    function setSubTab(group, tab) {
+      document.querySelectorAll(`.subtab-btn[data-group="${group}"]`).forEach(btn => {
+        btn.dataset.active = String(btn.dataset.tab === tab);
+      });
+      document.querySelectorAll(`.subtab-panel[data-group="${group}"]`).forEach(panel => {
+        panel.classList.toggle('hidden', panel.dataset.panel !== tab);
+      });
+    }
+
+    document.querySelectorAll('.subtab-btn').forEach(btn => {
+      btn.addEventListener('click', () => setSubTab(btn.dataset.group, btn.dataset.tab));
+    });
+
+    function setStatus(state) {
+      badge.textContent = state;
+      badge.className = 'hidden sm:inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold';
+      if (state === 'idle') badge.classList.add('bg-slate-100', 'text-slate-700');
+      if (state === 'loading') badge.classList.add('bg-blue-50', 'text-blue-700');
+      if (state === 'done') badge.classList.add('bg-emerald-50', 'text-emerald-700');
+      if (state === 'error') badge.classList.add('bg-rose-50', 'text-rose-700');
+    }
+
+    function showResult(data) {
+      resultBox.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+    }
+
+    function setLastAction(message) {
+      lastActionSummary.textContent = message || '대기 중';
+    }
+
+    function pushResult(targetId, title, message) {
+      const target = document.getElementById(targetId);
+      if (!target) return;
+      const empty = target.querySelector('.border-dashed');
+      if (empty) empty.remove();
+      const item = document.createElement('div');
+      item.className = 'rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700';
+      item.innerHTML = `
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="font-semibold text-slate-900">${escapeHtml(title)}</div>
+            <div class="mt-1 leading-6">${escapeHtml(message)}</div>
+          </div>
+          <span class="whitespace-nowrap text-xs text-slate-400">방금</span>
+        </div>
+      `;
+      target.prepend(item);
+    }
+
+    function appendActivity(title, message) {
+      setLastAction(title);
+      pushResult('documents-result-list', title, message);
+    }
+
+    function toDisplayString(value) {
+      if (value == null) return '';
+      if (typeof value === 'string') return value;
+      if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+      try {
+        return JSON.stringify(value, null, 2);
+      } catch {
+        return String(value);
+      }
+    }
+
+    function escapeHtml(value) {
+      return toDisplayString(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function parseJsonText(text, fallback = null) {
+      const raw = (text || '').trim();
+      if (!raw) return fallback;
+      return JSON.parse(raw);
+    }
+
+    async function requestJson(url, options = {}) {
+      const res = await fetch(url, options);
+      const text = await res.text();
+      let data = {};
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch {
+          data = { ok: res.ok, raw: text };
+        }
+      } else {
+        data = { ok: res.ok };
+      }
+
+      if (!res.ok || data?.ok === false) {
+        throw new Error(data?.error || data?.message || `HTTP ${res.status}`);
+      }
+      return data;
+    }
+
+    function normalizeCollectionItem(item) {
+      if (typeof item === 'string') return { name: item, metadata: null };
+      if (item && typeof item === 'object') {
+        return {
+          name: item.name ?? item.collection ?? item.collection_name ?? '',
+          metadata: item.metadata ?? null,
+        };
+      }
+      return { name: String(item ?? ''), metadata: null };
+    }
+
+    function renderCollectionOptions(selectEl, items, placeholder = '컬렉션을 선택하세요') {
+      const currentValue = selectEl.value;
+      const html = [
+        `<option value="">${escapeHtml(placeholder)}</option>`,
+        ...items
+          .filter(item => item.name)
+          .map(item => `<option value="${escapeHtml(item.name)}">${escapeHtml(item.name)}</option>`)
+      ].join('');
+
+      selectEl.innerHTML = html;
+      if (items.some(item => item.name === currentValue)) {
+        selectEl.value = currentValue;
+      }
+    }
+
+    function syncCollectionSelectors(items) {
+      renderCollectionOptions(ingestCollectionEl, items);
+      renderCollectionOptions(uploadCollectionEl, items);
+      renderCollectionOptions(searchCollectionEl, items);
+      renderCollectionOptions(getCollectionEl, items);
+      renderCollectionOptions(deleteCollectionEl, items);
+      cachedCollections = items;
+      collectionsSummaryCount.textContent = String(items.length);
+    }
+
+    async function loadCollections() {
+      const data = await requestJson('/api/db/collections');
+      const items = (data.collections || []).map(normalizeCollectionItem);
+      syncCollectionSelectors(items);
+      return items;
+    }
+
+    function buildIngestMetadata() {
+      return {
+        title: ingestTitleEl.value.trim(),
+        source: ingestSourceEl.value.trim(),
+        category: ingestCategoryEl.value.trim(),
+      };
+    }
+
+    function buildUploadMetadata() {
+      return {
+        category: uploadCategoryEl.value.trim(),
+        source: uploadSourceEl.value.trim(),
+      };
+    }
+
+    function updateIngestMetadataPreview() {
+      ingestMetadataPreviewEl.textContent = JSON.stringify(buildIngestMetadata(), null, 2);
+    }
+
+    function updateUploadMetadataPreview() {
+      uploadMetadataPreviewEl.textContent = JSON.stringify(buildUploadMetadata(), null, 2);
+    }
+
+    function renderSelectedFiles() {
+      const files = Array.from(uploadFileEl.files || []);
+      selectedFilesSummaryCount.textContent = String(files.length);
+
+      if (files.length === 0) {
+        uploadFileListEl.innerHTML = `
+          <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-500">
+            선택된 파일이 없습니다.
+          </div>
+        `;
+        uploadStatusCard.textContent = '선택된 파일이 없습니다.';
+        return;
+      }
+
+      uploadStatusCard.textContent = `${files.length}개 파일이 선택되었습니다.`;
+      uploadFileListEl.innerHTML = files.map((file, idx) => `
+        <div class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+          <div class="min-w-0">
+            <div class="truncate text-sm font-medium text-slate-800">${escapeHtml(file.name)}</div>
+            <div class="mt-1 text-xs text-slate-500">${(file.size / 1024).toFixed(1)} KB</div>
+          </div>
+          <div class="ml-4 shrink-0 rounded-full bg-white px-2 py-1 text-xs text-slate-600 ring-1 ring-slate-200">${idx + 1}</div>
+        </div>
+      `).join('');
+    }
+
+
+    function truncateText(value, maxLength = 180) {
+      const text = toDisplayString(value).replace(/\s+/g, ' ').trim();
+      if (!text) return '-';
+      return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+    }
+
+    function safeJsonString(value) {
+      try {
+        return JSON.stringify(value ?? {}, null, 2);
+      } catch {
+        return '{}';
+      }
+    }
+
+    function buildDocumentRow(id, document, metadata, index = 0, collection = '') {
+      const safeMetadata = metadata && typeof metadata === 'object' ? metadata : {};
+      return {
+        no: index + 1,
+        id,
+        document: document ?? '',
+        metadata: safeMetadata,
+        collection,
+        title: safeMetadata.title || safeMetadata.heading || safeMetadata.doc_id || safeMetadata.chunk_doc_id || '-',
+        source: safeMetadata.source || safeMetadata.url || '-',
+        category: safeMetadata.category || safeMetadata.block_type || safeMetadata.doc_type || '-',
+        docKey: safeMetadata.doc_id || safeMetadata.chunk_doc_id || '-',
+      };
+    }
+
+    function normalizeDocumentRows(data, collection = '') {
+      const result = data?.result ?? data ?? {};
+      const ids = Array.isArray(result?.ids) ? result.ids : [];
+      const documents = Array.isArray(result?.documents) ? result.documents : [];
+      const metadatas = Array.isArray(result?.metadatas) ? result.metadatas : [];
+      return ids.map((id, index) => buildDocumentRow(id, documents[index] ?? '', metadatas[index] ?? {}, index, collection));
+    }
+
+    function rebuildRowNumbers(rows) {
+      return rows.map((row, index) => ({ ...row, no: index + 1 }));
+    }
+
+    function buildRowSearchTarget(row) {
+      return [
+        row.id,
+        row.document,
+        row.title,
+        row.source,
+        row.category,
+        row.docKey,
+        safeJsonString(row.metadata),
+      ].join(' ').toLowerCase();
+    }
+
+    function filterRows(rows, keyword) {
+      const q = (keyword || '').trim().toLowerCase();
+      if (!q) return rows;
+      return rows.filter(row => buildRowSearchTarget(row).includes(q));
+    }
+
+    function buildMetaChips(row) {
+      const pairs = [
+        ['title', row.metadata?.title],
+        ['doc_id', row.metadata?.doc_id],
+        ['heading', row.metadata?.heading],
+        ['source', row.metadata?.source],
+        ['category', row.metadata?.category],
+        ['block_type', row.metadata?.block_type],
+      ].filter(([, value]) => value);
+
+      if (pairs.length === 0) {
+        return '<span class="text-xs text-slate-400">metadata 없음</span>';
+      }
+
+      return `<div class="meta-stack">${pairs.slice(0, 6).map(([key, value]) => `
+        <span class="meta-chip"><b>${escapeHtml(key)}</b><span class="truncate">${escapeHtml(value)}</span></span>
+      `).join('')}</div>`;
+    }
+
+    async function fetchAllDocuments(collection, where, batchSize = 200, startOffset = 0) {
+      const safeBatchSize = Math.max(1, Number(batchSize) || 200);
+      let currentOffset = Math.max(0, Number(startOffset) || 0);
+      let pageCount = 0;
+      const merged = { ids: [], documents: [], metadatas: [] };
+
+      while (true) {
+        const params = new URLSearchParams();
+        params.set('collection', collection);
+        params.set('limit', String(safeBatchSize));
+        params.set('offset', String(currentOffset));
+        if (where) params.set('where', where);
+
+        const data = await requestJson(`/api/db/documents?${params.toString()}`);
+        const result = data?.result ?? data ?? {};
+        const pageIds = Array.isArray(result?.ids) ? result.ids : [];
+        const pageDocuments = Array.isArray(result?.documents) ? result.documents : [];
+        const pageMetadatas = Array.isArray(result?.metadatas) ? result.metadatas : [];
+
+        merged.ids.push(...pageIds);
+        merged.documents.push(...pageDocuments);
+        merged.metadatas.push(...pageMetadatas);
+        pageCount += 1;
+
+        if (pageIds.length === 0 || pageIds.length < safeBatchSize) break;
+        currentOffset += safeBatchSize;
+        if (pageCount > 500) throw new Error('조회 페이지 수가 비정상적으로 많습니다. batch size를 키워서 다시 시도하세요.');
+      }
+
+      return {
+        ok: true,
+        collection,
+        total_count: merged.ids.length,
+        batch_size: safeBatchSize,
+        start_offset: Math.max(0, Number(startOffset) || 0),
+        page_count: pageCount,
+        result: merged,
+      };
+    }
+
+    function openEditModal(row) {
+      const collection = row?.collection || getCollectionEl.value.trim();
+      if (!collection) throw new Error('수정할 컬렉션 정보가 없습니다. 먼저 문서를 조회하세요.');
+      editingRowId = row.id;
+      editingCollectionName = collection;
+      editCollectionNameEl.value = collection;
+      editDocIdEl.value = row.id;
+      editDocumentTextEl.value = row.document || '';
+      editMetadataJsonEl.value = safeJsonString(row.metadata);
+      editModalHintEl.textContent = `${row.id} 문서를 수정 중입니다.`;
+      editModalEl.classList.remove('hidden');
+      editModalEl.classList.add('flex');
+      document.body.classList.add('overflow-hidden');
+    }
+
+    function closeEditModal() {
+      editModalEl.classList.add('hidden');
+      editModalEl.classList.remove('flex');
+      document.body.classList.remove('overflow-hidden');
+      editingRowId = null;
+      editingCollectionName = '';
+      editCollectionNameEl.value = '';
+      editDocIdEl.value = '';
+      editDocumentTextEl.value = '';
+      editMetadataJsonEl.value = '';
+      editModalHintEl.textContent = '수정할 문서를 선택하면 여기서 바로 편집할 수 있습니다.';
+    }
+
+    function applyUpdatedRowToTables(updatedRow) {
+      readRows = rebuildRowNumbers(readRows.map(row => row.id === updatedRow.id && row.collection === updatedRow.collection ? updatedRow : row));
+      deleteRows = rebuildRowNumbers(deleteRows.map(row => row.id === updatedRow.id && row.collection === updatedRow.collection ? updatedRow : row));
+      renderReadTable();
+      renderDeleteTable();
+    }
+
+    function renderReadTable() {
+      const filteredRows = filterRows(readRows, readFilterKeywordEl.value);
+      readRowCountEl.textContent = String(filteredRows.length);
+      readTableSummaryEl.textContent = readRows.length ? `전체 ${readRows.length}건 / 필터 결과 ${filteredRows.length}건` : '전체 조회 전입니다.';
+
+      if (filteredRows.length === 0) {
+        readTableWrapEl.classList.add('hidden');
+        readTableEmptyEl.classList.remove('hidden');
+        readTableEmptyEl.textContent = readRows.length ? '필터 결과가 없습니다.' : '아직 조회된 문서가 없습니다.';
+        readTableBodyEl.innerHTML = '';
+        return;
+      }
+
+      readTableEmptyEl.classList.add('hidden');
+      readTableWrapEl.classList.remove('hidden');
+      readTableBodyEl.innerHTML = filteredRows.map(row => `
+        <tr class="table-row-hover align-top">
+          <td class="whitespace-nowrap px-4 py-4 text-slate-500">${row.no}</td>
+          <td class="px-4 py-4"><div class="max-w-[260px] break-all font-semibold text-slate-900">${escapeHtml(row.id)}</div></td>
+          <td class="px-4 py-4"><div class="space-y-2"><div class="font-semibold text-slate-900">${escapeHtml(row.title)}</div><div class="text-xs text-slate-500">doc_key: ${escapeHtml(row.docKey)}</div><div class="text-xs text-slate-500">source: ${escapeHtml(row.source)}</div><div class="text-xs text-slate-500">category: ${escapeHtml(row.category)}</div></div></td>
+          <td class="px-4 py-4"><div class="doc-preview">${escapeHtml(truncateText(row.document, 220))}</div></td>
+          <td class="px-4 py-4">${buildMetaChips(row)}</td>
+          <td class="px-4 py-4"><button type="button" class="btn-edit-row rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700" data-id="${escapeHtml(row.id)}">수정</button></td>
+        </tr>
+      `).join('');
+    }
+
+    function renderDeleteTable() {
+      const filteredRows = filterRows(deleteRows, deleteFilterKeywordEl.value);
+      const visibleIds = new Set(filteredRows.map(row => row.id));
+      deleteSelectedIds = new Set([...deleteSelectedIds].filter(id => deleteRows.some(row => row.id === id)));
+      deleteRowCountEl.textContent = String(filteredRows.length);
+      deleteSelectedCountEl.textContent = String(deleteSelectedIds.size);
+      deleteTableSummaryEl.textContent = deleteRows.length
+        ? `전체 ${deleteRows.length}건 / 필터 결과 ${filteredRows.length}건`
+        : '삭제 대상 조회 전입니다.';
+      deleteCheckAllEl.checked = filteredRows.length > 0 && filteredRows.every(row => deleteSelectedIds.has(row.id));
+
+      if (filteredRows.length === 0) {
+        deleteTableWrapEl.classList.add('hidden');
+        deleteTableEmptyEl.classList.remove('hidden');
+        deleteTableEmptyEl.textContent = deleteRows.length ? '필터 결과가 없습니다.' : '아직 삭제 대상이 조회되지 않았습니다.';
+        deleteTableBodyEl.innerHTML = '';
+        return;
+      }
+
+      deleteTableEmptyEl.classList.add('hidden');
+      deleteTableWrapEl.classList.remove('hidden');
+      deleteTableBodyEl.innerHTML = filteredRows.map(row => `
+        <tr class="table-row-hover align-top">
+          <td class="px-4 py-4">
+            <input type="checkbox" class="delete-row-checkbox h-4 w-4 rounded border-slate-300 text-rose-600 focus:ring-rose-500" data-id="${escapeHtml(row.id)}" ${deleteSelectedIds.has(row.id) ? 'checked' : ''} />
+          </td>
+          <td class="px-4 py-4">
+            <div class="max-w-[260px] break-all font-semibold text-slate-900">${escapeHtml(row.id)}</div>
+          </td>
+          <td class="px-4 py-4">
+            <div class="space-y-2">
+              <div class="font-semibold text-slate-900">${escapeHtml(row.title)}</div>
+              <div class="text-xs text-slate-500">doc_key: ${escapeHtml(row.docKey)}</div>
+              <div class="text-xs text-slate-500">source: ${escapeHtml(row.source)}</div>
+              <div class="text-xs text-slate-500">category: ${escapeHtml(row.category)}</div>
+            </div>
+          </td>
+          <td class="px-4 py-4">
+            <div class="doc-preview">${escapeHtml(truncateText(row.document, 180))}</div>
+          </td>
+          <td class="px-4 py-4">${buildMetaChips(row)}</td>
+          <td class="px-4 py-4">
+            <button type="button" class="btn-delete-row rounded-xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white hover:bg-rose-700" data-id="${escapeHtml(row.id)}">삭제</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function loadReadDocuments() {
+      const collection = getCollectionEl.value.trim();
+      if (!collection) throw new Error('컬렉션을 선택하세요.');
+      const batchSize = document.getElementById('getLimit').value.trim() || '200';
+      const startOffset = document.getElementById('getOffset').value.trim() || '0';
+      const where = document.getElementById('getWhere').value.trim();
+      const data = await fetchAllDocuments(collection, where, batchSize, startOffset);
+      readRows = normalizeDocumentRows(data, collection);
+      showResult(data);
+      renderReadTable();
+      appendActivity('전체 문서 조회 완료', `${collection} 컬렉션 전체를 조회했습니다. (${readRows.length}건)`);
+      return data;
+    }
+
+    async function loadDeleteDocuments() {
+      const collection = deleteCollectionEl.value.trim();
+      if (!collection) throw new Error('컬렉션을 선택하세요.');
+      const batchSize = deleteLimitEl.value.trim() || '200';
+      const startOffset = deleteOffsetEl.value.trim() || '0';
+      const where = deleteWhereEl.value.trim();
+      const data = await fetchAllDocuments(collection, where, batchSize, startOffset);
+      deleteRows = normalizeDocumentRows(data, collection);
+      deleteSelectedIds = new Set();
+      showResult(data);
+      renderDeleteTable();
+      appendActivity('삭제 대상 전체 조회 완료', `${collection} 컬렉션 삭제 대상 전체를 조회했습니다. (${deleteRows.length}건)`);
+      return data;
+    }
+
+    async function saveEditedDocument() {
+      if (!editingRowId || !editingCollectionName) throw new Error('수정할 문서를 먼저 선택하세요.');
+      const editedDocument = editDocumentTextEl.value;
+      if (!editedDocument.trim()) throw new Error('문서 본문은 비워둘 수 없습니다.');
+
+      let editedMetadata = {};
+      const rawMetadata = editMetadataJsonEl.value.trim();
+      if (rawMetadata) {
+        try {
+          editedMetadata = JSON.parse(rawMetadata);
+        } catch (error) {
+          throw new Error(`metadata JSON 파싱 실패: ${error.message}`);
+        }
+      }
+      if (!editedMetadata || Array.isArray(editedMetadata) || typeof editedMetadata !== 'object') throw new Error('metadata JSON은 객체 형태여야 합니다.');
+
+      const data = await requestJson('/api/db/documents/upsert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          collection: editingCollectionName,
+          ids: [editingRowId],
+          documents: [editedDocument],
+          metadatas: [editedMetadata],
+        }),
+      });
+
+      const updatedRow = buildDocumentRow(editingRowId, editedDocument, editedMetadata, 0, editingCollectionName);
+      applyUpdatedRowToTables(updatedRow);
+      showResult(data);
+      appendActivity('문서 수정 완료', `${editingCollectionName} 컬렉션에서 ${editingRowId} 문서를 수정했습니다.`);
+      closeEditModal();
+      return data;
+    }
+
+    async function deleteDocumentIds(ids) {
+      if (!Array.isArray(ids) || ids.length === 0) {
+        throw new Error('삭제할 문서를 선택하세요.');
+      }
+
+      const collection = deleteCollectionEl.value.trim();
+      if (!collection) throw new Error('컬렉션을 선택하세요.');
+
+      const data = await requestJson('/api/db/documents', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ collection, ids }),
+      });
+
+      const idSet = new Set(ids);
+      deleteRows = deleteRows.filter(row => !idSet.has(row.id));
+      readRows = readRows.filter(row => !idSet.has(row.id));
+      deleteSelectedIds = new Set([...deleteSelectedIds].filter(id => !idSet.has(id)));
+
+      showResult(data);
+      renderDeleteTable();
+      renderReadTable();
+      appendActivity('문서 삭제 완료', `${collection} 컬렉션에서 ${ids.length}건 삭제했습니다.`);
+      return data;
+    }
+
+    document.getElementById('btnClearResult').addEventListener('click', () => {
+      resultBox.textContent = '아직 실행 결과가 없습니다.';
+    });
+
+    document.getElementById('btnClearActivity').addEventListener('click', () => {
+      document.getElementById('documents-result-list').innerHTML = '<div class="rounded-2xl border border-dashed border-slate-300 px-4 py-6 text-sm leading-7 text-slate-500">아직 실행된 작업이 없습니다.</div>';
+      setLastAction('대기 중');
+    });
+
+    document.getElementById('btnIngestText').addEventListener('click', async () => {
+      try {
+        setStatus('loading');
+        const collection = ingestCollectionEl.value.trim();
+        if (!collection) throw new Error('컬렉션을 선택하세요.');
+
+        const text = document.getElementById('ingestText').value;
+        if (!text.trim()) throw new Error('문서 본문을 입력하세요.');
+
+        const payload = {
+          collection,
+          doc_id: document.getElementById('ingestDocId').value.trim() || null,
+          metadata: buildIngestMetadata(),
+          text,
+        };
+
+        const data = await requestJson('/api/db/documents/ingest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        showResult(data);
+        appendActivity('텍스트 삽입 완료', `${collection} 컬렉션에 텍스트 문서를 저장했습니다.`);
+        setSubTab('documents', 'results');
+        setStatus('done');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity('텍스트 삽입 실패', String(err));
+        setSubTab('documents', 'results');
+        setStatus('error');
+      }
+    });
+
+    document.getElementById('btnUploadFile').addEventListener('click', async () => {
+      try {
+        setStatus('loading');
+        const collection = uploadCollectionEl.value.trim();
+        if (!collection) throw new Error('컬렉션을 선택하세요.');
+
+        const files = Array.from(uploadFileEl.files || []);
+        if (files.length === 0) throw new Error('파일을 선택하세요.');
+
+        const formData = new FormData();
+        formData.append('collection', collection);
+        formData.append('metadata', JSON.stringify(buildUploadMetadata()));
+
+        const docIdPrefix = uploadDocIdEl.value.trim();
+        if (docIdPrefix) {
+          formData.append('doc_id', docIdPrefix);
+        }
+
+        for (const file of files) {
+          formData.append('files', file);
+        }
+
+        const res = await fetch('/api/db/documents/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok || data?.ok === false) {
+          throw new Error(data?.error || `HTTP ${res.status}`);
+        }
+
+        showResult(data);
+        appendActivity('파일 업로드 완료', `${collection} 컬렉션으로 ${files.length}개 파일 업로드를 요청했습니다.`);
+        setSubTab('documents', 'results');
+        setStatus((data?.error_count || 0) > 0 ? 'error' : 'done');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity('파일 업로드 실패', String(err));
+        setSubTab('documents', 'results');
+        setStatus('error');
+      }
+    });
+
+    document.getElementById('btnSearchDocuments').addEventListener('click', async () => {
+      try {
+        setStatus('loading');
+        const collection = searchCollectionEl.value.trim();
+        if (!collection) throw new Error('컬렉션을 선택하세요.');
+
+        const query = document.getElementById('searchQuery').value.trim();
+        if (!query) throw new Error('검색어를 입력하세요.');
+
+        const params = new URLSearchParams();
+        params.set('collection', collection);
+        params.set('query', query);
+        params.set('k', document.getElementById('searchK').value.trim() || '5');
+
+        const where = document.getElementById('searchWhere').value.trim();
+        if (where) params.set('where', where);
+
+        const data = await requestJson(`/api/db/search?${params.toString()}`);
+        showResult(data);
+        appendActivity('문서 검색 완료', `${collection} 컬렉션에서 "${query}" 검색을 실행했습니다.`);
+        setSubTab('documents', 'results');
+        setStatus('done');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity('문서 검색 실패', String(err));
+        setSubTab('documents', 'results');
+        setStatus('error');
+      }
+    });
+
+    document.getElementById('btnGetDocuments').addEventListener('click', async () => {
+      try {
+        setStatus('loading');
+        await loadReadDocuments();
+        setStatus('done');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity('전체 문서 조회 실패', String(err));
+        setStatus('error');
+      }
+    });
+
+    document.getElementById('btnLoadDeleteDocuments').addEventListener('click', async () => {
+      try {
+        setStatus('loading');
+        await loadDeleteDocuments();
+        setStatus('done');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity('삭제 대상 전체 조회 실패', String(err));
+        setStatus('error');
+      }
+    });
+
+    document.getElementById('btnDeleteSelected').addEventListener('click', async () => {
+      try {
+        const ids = [...deleteSelectedIds];
+        if (ids.length === 0) throw new Error('삭제할 문서를 선택하세요.');
+        if (!window.confirm(`선택한 ${ids.length}건을 삭제하시겠습니까?`)) return;
+
+        setStatus('loading');
+        await deleteDocumentIds(ids);
+        setStatus('done');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity('문서 삭제 실패', String(err));
+        setStatus('error');
+      }
+    });
+
+
+
+    document.getElementById('btnResetReadFilter').addEventListener('click', () => {
+      readFilterKeywordEl.value = '';
+      renderReadTable();
+    });
+
+    document.getElementById('btnResetDeleteFilter').addEventListener('click', () => {
+      deleteFilterKeywordEl.value = '';
+      renderDeleteTable();
+    });
+
+    readFilterKeywordEl.addEventListener('input', renderReadTable);
+    deleteFilterKeywordEl.addEventListener('input', renderDeleteTable);
+
+    deleteCheckAllEl.addEventListener('change', () => {
+      const filteredRows = filterRows(deleteRows, deleteFilterKeywordEl.value);
+      if (deleteCheckAllEl.checked) {
+        filteredRows.forEach(row => deleteSelectedIds.add(row.id));
+      } else {
+        filteredRows.forEach(row => deleteSelectedIds.delete(row.id));
+      }
+      renderDeleteTable();
+    });
+
+    readTableBodyEl.addEventListener('click', (event) => {
+      const button = event.target.closest('.btn-edit-row');
+      if (!button) return;
+      const id = button.dataset.id;
+      const row = readRows.find(item => item.id === id);
+      if (!row) return;
+
+      try {
+        openEditModal(row);
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity('문서 수정 준비 실패', String(err));
+      }
+    });
+
+    deleteTableBodyEl.addEventListener('change', (event) => {
+      const checkbox = event.target.closest('.delete-row-checkbox');
+      if (!checkbox) return;
+      const id = checkbox.dataset.id;
+      if (!id) return;
+
+      if (checkbox.checked) deleteSelectedIds.add(id);
+      else deleteSelectedIds.delete(id);
+
+      deleteSelectedCountEl.textContent = String(deleteSelectedIds.size);
+      const filteredRows = filterRows(deleteRows, deleteFilterKeywordEl.value);
+      deleteCheckAllEl.checked = filteredRows.length > 0 && filteredRows.every(row => deleteSelectedIds.has(row.id));
+    });
+
+    deleteTableBodyEl.addEventListener('click', async (event) => {
+      const button = event.target.closest('.btn-delete-row');
+      if (!button) return;
+
+      const id = button.dataset.id;
+      if (!id) return;
+      if (!window.confirm(`선택한 문서 1건을 삭제하시겠습니까?\n${id}`)) return;
+
+      try {
+        setStatus('loading');
+        await deleteDocumentIds([id]);
+        setStatus('done');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity('문서 삭제 실패', String(err));
+        setStatus('error');
+      }
+    });
+
+    document.getElementById('btnCloseEditModal').addEventListener('click', closeEditModal);
+    document.getElementById('btnCancelEdit').addEventListener('click', closeEditModal);
+    editModalEl.addEventListener('click', (event) => {
+      if (event.target?.dataset?.closeEditModal === 'true') closeEditModal();
+    });
+    window.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !editModalEl.classList.contains('hidden')) closeEditModal();
+    });
+    document.getElementById('btnSaveEdit').addEventListener('click', async () => {
+      try {
+        setStatus('loading');
+        await saveEditedDocument();
+        setStatus('done');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity('문서 수정 실패', String(err));
+        setStatus('error');
+      }
+    });
+
+    ingestTitleEl.addEventListener('input', updateIngestMetadataPreview);
+    ingestSourceEl.addEventListener('input', updateIngestMetadataPreview);
+    ingestCategoryEl.addEventListener('input', updateIngestMetadataPreview);
+    uploadCategoryEl.addEventListener('input', updateUploadMetadataPreview);
+    uploadSourceEl.addEventListener('input', updateUploadMetadataPreview);
+    uploadFileEl.addEventListener('change', renderSelectedFiles);
+
+    (async function init() {
+      try {
+        setSubTab('documents', 'ingest');
+        updateIngestMetadataPreview();
+        updateUploadMetadataPreview();
+        renderSelectedFiles();
+        renderReadTable();
+        renderDeleteTable();
+        setStatus('loading');
+        await loadCollections();
+        setStatus('idle');
+      } catch (err) {
+        showResult({ ok: false, error: String(err) });
+        appendActivity('초기화 실패', String(err));
+        setSubTab('documents', 'results');
+        setStatus('error');
+      }
+    })();
+  </script>
+</body>
+</html>

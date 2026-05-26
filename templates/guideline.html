@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>지식베이스 관리 가이드라인</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          boxShadow: {
+            soft: '0 10px 30px rgba(15, 23, 42, 0.08)',
+            panel: '0 18px 40px rgba(15, 23, 42, 0.12)'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: Pretendard, 'Noto Sans KR', system-ui, sans-serif; }
+    .thin-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+    .thin-scrollbar::-webkit-scrollbar-thumb { background: rgba(148,163,184,.45); border-radius: 999px; }
+    .thin-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .sidebar-item[data-active="true"] { background: rgb(15 23 42); color: white; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08); }
+    .sidebar-item[data-active="true"] .sidebar-icon { background: rgba(255,255,255,.10); color: white; }
+    .sidebar-item[data-active="true"] .sidebar-sub { color: rgb(203 213 225); }
+    .main-tab[data-active="true"] { background: rgb(37 99 235); color: white; border-color: rgb(37 99 235); }
+    .panel.hidden { display: none; }
+    .subnav-btn[data-active="true"] { background: rgb(15 23 42); color: white; border-color: rgb(15 23 42); }
+    .doc-card img { transition: transform .25s ease; }
+    .doc-card:hover img { transform: scale(1.01); }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-900">
+  <div class="min-h-screen lg:flex">
+    <div id="mobileSidebarBackdrop" class="fixed inset-0 z-40 hidden bg-slate-900/40 lg:hidden"></div>
+    <aside id="sidebar" class="fixed left-0 top-0 z-50 flex h-full w-72 -translate-x-full flex-col border-r border-slate-200 bg-white transition-transform duration-300 lg:static lg:translate-x-0">
+      <div class="px-5 py-6 border-b border-slate-200">
+        <div class="flex items-center gap-3">
+          <div class="h-12 w-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-soft"><i class="fas fa-graduation-cap"></i></div>
+          <div>
+            <div class="text-lg font-extrabold tracking-tight">한림대학교 AI 튜터</div>
+            <div class="text-xs text-slate-500">Knowledge Base Console</div>
+          </div>
+        </div>
+        <div class="mt-5 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <div class="text-xs text-slate-500">현재 사용자</div>
+          <div class="mt-1 text-lg font-bold">{{ student_id | default('admin') }}</div>
+          <div class="mt-1 text-xs text-slate-500">컬렉션/문서/웹문서 가이드 열람</div>
+        </div>
+      </div>
+      <div class="px-4 py-6 flex-1 flex flex-col">
+        <div class="px-2 text-xs font-semibold tracking-[0.24em] text-slate-400 uppercase">Menu</div>
+        <nav class="mt-4 space-y-2">
+          <a class="sidebar-item flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left text-slate-900 hover:bg-slate-50" data-active="false" href="/rag/collections"><span class="sidebar-icon h-11 w-11 rounded-xl bg-slate-100 flex items-center justify-center"><i class="fas fa-layer-group"></i></span><span><span class="block text-sm font-semibold">컬렉션</span><span class="sidebar-sub block text-xs text-slate-500">/rag/collections</span></span></a>
+          <a class="sidebar-item flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left text-slate-900 hover:bg-slate-50" data-active="false" href="/rag/documents"><span class="sidebar-icon h-11 w-11 rounded-xl bg-slate-100 flex items-center justify-center"><i class="fas fa-file-pdf"></i></span><span><span class="block text-sm font-semibold">문서</span><span class="sidebar-sub block text-xs text-slate-500">/rag/documents</span></span></a>
+          <a class="sidebar-item flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left text-slate-900 hover:bg-slate-50" data-active="false" href="/rag/web_docs"><span class="sidebar-icon h-11 w-11 rounded-xl bg-slate-100 flex items-center justify-center"><i class="fas fa-globe"></i></span><span><span class="block text-sm font-semibold">웹문서</span><span class="sidebar-sub block text-xs text-slate-500">/rag/web_docs</span></span></a>
+          <a class="sidebar-item flex w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left text-slate-900 hover:bg-slate-50" data-active="true" href="/rag/guideline"><span class="sidebar-icon h-11 w-11 rounded-xl bg-slate-100 flex items-center justify-center"><i class="fas fa-book-open"></i></span><span><span class="block text-sm font-semibold">가이드라인</span><span class="sidebar-sub block text-xs text-slate-500">/rag/guideline</span></span></a>
+        </nav>
+        <div class="mt-auto pt-6"><a href="/" class="flex items-center justify-center gap-2 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-200"><i class="fas fa-right-from-bracket"></i>메인으로</a></div>
+        <div class="mt-auto pt-6"><a href="/logout" class="flex items-center justify-center gap-2 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-200"><i class="fas fa-right-from-bracket"></i>로그아웃</a></div>
+
+      </div>
+    </aside>
+
+    <div class="flex-1 min-w-0">
+      <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
+        <div class="flex items-center justify-between gap-3 px-4 lg:px-8 py-4">
+          <div class="flex items-center gap-3 lg:gap-6 min-w-0">
+            <button id="mobileMenuOpen" type="button" class="lg:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white text-slate-700"><i class="fas fa-bars"></i></button>
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="h-11 w-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center"><i class="fas fa-book-open"></i></div>
+              <div class="min-w-0"><div class="font-extrabold truncate">RAG 관리 가이드라인</div><div class="text-xs text-slate-500">Collections / Documents / Web Docs 운영 · 개발 가이드</div></div>
+            </div>
+          </div>
+          <div class="flex items-center gap-3"><span class="hidden sm:inline-flex items-center rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700">guide</span><button type="button" class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 shadow-soft"><span class="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600">GD</span><span class="hidden sm:block text-right"><span class="block text-sm font-semibold">관리 콘솔</span><span class="block text-xs text-slate-500">가이드 메뉴</span></span></button></div>
+        </div>
+      </header>
+
+      <main class="px-4 py-6 lg:px-8 lg:py-8 space-y-6">
+        <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div class="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700"><i class="fas fa-compass-drafting"></i>전체 화면 가이드</div>
+              <h1 class="mt-3 text-2xl font-extrabold tracking-tight text-slate-900 lg:text-3xl">컬렉션 · 문서관리 · 웹문서 페이지 가이드라인</h1>
+              <p class="mt-2 max-w-4xl text-sm leading-7 text-slate-500">첨부된 실제 화면 이미지를 기준으로, 각 페이지의 목적 · 탭 구조 · 사용자 흐름 · API 역할 · 상태 표현 방식을 한 번에 정리한 운영/개발 가이드입니다. 화면 구조를 유지하면서 기능 수정, API 연동, QA 점검을 할 때 기준 문서로 사용할 수 있습니다.</p>
+            </div>
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:min-w-[480px]">
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4"><div class="text-xs text-slate-500">대상 화면</div><div class="mt-2 text-2xl font-bold text-slate-900">3</div><div class="mt-1 text-xs text-slate-500">컬렉션 / 문서 / 웹문서</div></div>
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4"><div class="text-xs text-slate-500">활용 스크린샷</div><div class="mt-2 text-2xl font-bold text-slate-900">15</div><div class="mt-1 text-xs text-slate-500">외부 static 이미지 URL 반영</div></div>
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4"><div class="text-xs text-slate-500">핵심 관점</div><div class="mt-2 text-base font-bold text-slate-900">UI + Flow + API</div><div class="mt-1 text-xs text-slate-500">화면, 동작, 데이터 구조</div></div>
+            </div>
+          </div>
+        </section>
+        <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6"><div class="thin-scrollbar flex gap-2 overflow-x-auto pb-1"><button class="main-tab shrink-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700" data-target="overview" data-active="true"><i class="fas fa-circle-info mr-2"></i>개요</button><button class="main-tab shrink-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700" data-target="collections" data-active="false"><i class="fas fa-layer-group mr-2"></i>컬렉션</button><button class="main-tab shrink-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700" data-target="documents" data-active="false"><i class="fas fa-file-lines mr-2"></i>문서관리</button><button class="main-tab shrink-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700" data-target="webdocs" data-active="false"><i class="fas fa-globe mr-2"></i>웹문서</button><button class="main-tab shrink-0 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700" data-target="kakao" data-active="false"><i class="fas fa-comment-dots mr-2"></i>카카오톡 채널</button></div></section>
+
+        <section id="overview" class="panel space-y-6">
+          <div class="grid gap-6 lg:grid-cols-2">
+            <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft"><h2 class="text-lg font-bold text-slate-900">공통 UI 패턴</h2><div class="mt-4 space-y-3 text-sm text-slate-600 leading-7"><div>• 좌측 사이드바는 모든 화면에서 동일한 정보 구조를 사용한다.</div><div>• 상단 헤더는 페이지 제목 + 서브타이틀 + 상태 배지 + 우측 사용자 버튼으로 구성된다.</div><div>• 본문 상단에는 Hero 영역이 있고, 화면 목적과 요약 지표를 함께 보여준다.</div><div>• 주요 기능은 탭 또는 단계형 탭으로 전환되며, 활성 탭은 파란색으로 강조된다.</div><div>• 폼 화면은 좌측 입력/작업, 우측 API·상태 보조 패널의 2단 구조를 기본으로 한다.</div><div>• 결과 탭은 작업 로그 + Raw API 결과를 함께 보여주는 패턴을 재사용한다.</div></div></div>
+            <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft"><h2 class="text-lg font-bold text-slate-900">개발 시 핵심 원칙</h2><div class="mt-4 space-y-3 text-sm text-slate-600 leading-7"><div>• 탭 전환은 화면 이동이 아니라 동일 페이지 내 패널 교체로 처리한다.</div><div>• 컬렉션 목록은 생성/삭제 후 자동 새로고침되어야 한다.</div><div>• 문서 화면은 컬렉션 목록을 공통 데이터 소스로 사용한다.</div><div>• 웹문서는 1 → 2 → 3 → 4 단계 플로우가 깨지지 않도록 상태를 공유해야 한다.</div><div>• 모든 작업은 사용자가 확인할 수 있도록 로그와 Raw API Result에 누적되어야 한다.</div><div>• 입력 미리보기(JSON, 메타데이터, 선택된 URL, 선택 요소)는 사용자 실수를 줄이기 위한 필수 UX다.</div></div></div>
+          </div>
+          <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6 overflow-hidden"><h2 class="text-lg font-bold text-slate-900">페이지별 목적 요약</h2><div class="mt-5 grid gap-4 lg:grid-cols-3 text-sm"><div class="rounded-2xl border border-slate-200 bg-slate-50 p-4"><div class="font-bold text-slate-900">컬렉션 관리</div><p class="mt-2 text-slate-600 leading-7">지식베이스의 컬렉션을 생성하고, 목록 조회·메타데이터 편집·count 조회·삭제·alias 관리를 수행하는 관리자 화면이다.</p></div><div class="rounded-2xl border border-slate-200 bg-slate-50 p-4"><div class="font-bold text-slate-900">문서 관리</div><p class="mt-2 text-slate-600 leading-7">텍스트/파일 업로드부터 검색, 전체 조회, 수정, 삭제까지 문서 라이프사이클을 한 화면에서 관리하는 화면이다.</p></div><div class="rounded-2xl border border-slate-200 bg-slate-50 p-4"><div class="font-bold text-slate-900">웹문서 처리</div><p class="mt-2 text-slate-600 leading-7">URL을 입력해 요소를 선택하고, 링크를 추출한 뒤, 선택된 URL을 컬렉션으로 임베딩하는 단계형 워크플로 화면이다.</p></div></div></div>
+        </section>
+
+        <section id="collections" class="panel hidden space-y-6"><div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6"><div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"><div><h2 class="text-xl font-bold text-slate-900">컬렉션 관리 가이드</h2><p class="mt-1 text-sm text-slate-500">생성 / 목록 / Alias / 유틸리티 / 결과 탭의 역할과 구현 포인트를 설명한다.</p></div><div class="flex flex-wrap gap-2"><button class="subnav-btn rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold" data-group="col" data-sub="c1" data-active="true">생성</button><button class="subnav-btn rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold" data-group="col" data-sub="c2" data-active="false">목록</button><button class="subnav-btn rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold" data-group="col" data-sub="c3" data-active="false">Alias</button><button class="subnav-btn rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold" data-group="col" data-sub="c4" data-active="false">유틸리티</button><button class="subnav-btn rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold" data-group="col" data-sub="c5" data-active="false">결과</button></div></div></div>
+    <div class="subpanel space-y-6" data-group="col" data-subpanel="c1">
+      <div class="grid gap-6 xl:grid-cols-[1.12fr_.88fr]">
+        <article class="doc-card rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">컬렉션 생성</h3>
+              <p class="mt-1 text-sm text-slate-500">신규 컬렉션 이름, 도메인, 설명을 입력하고 metadata preview를 확인한 뒤 생성한다.</p>
+            </div>
+            <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">화면 기준</span>
+          </div>
+          <div class="mt-5 overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50">
+            <img src="/static/images/screenshot_01.png" alt="컬렉션 생성" class="w-full" />
+          </div>
+        </article>
+        <div class="space-y-6">
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">설명 포인트</h4>
+            <ul class="mt-4 list-disc space-y-2 pl-5 text-sm leading-7 text-slate-600">
+              <li>컬렉션 이름과 도메인은 텍스트 입력 필드로 받는다.</li><li>metadata.engine은 고정값 cosine으로 유지된다.</li><li>설명 textarea와 JSON 미리보기는 실시간 동기화되는 것이 좋다.</li><li>생성 완료 후 컬렉션 목록과 Alias select 데이터가 갱신되어야 한다.</li>
+            </ul>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">관련 엔드포인트 / 상태</h4>
+            <div class="mt-4 space-y-3 text-sm text-slate-600">
+              <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>생성 API</span><span class="font-semibold text-sky-700">POST /api/db/collections</span></div><div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>목록 갱신</span><span class="font-semibold text-sky-700">자동 refresh</span></div><div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>Alias select</span><span class="font-semibold text-sky-700">자동 sync</span></div>
+            </div>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">구현 메모</h4>
+            <div class="mt-4 space-y-3"><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">미리보기 JSON은 사용자의 입력이 API payload에 어떻게 반영되는지 보여주는 UX 장치다.</div><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">우측 패널은 실제 API 바디 구조를 명시해 운영자와 개발자가 같은 규격을 보게 한다.</div></div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="subpanel hidden space-y-6" data-group="col" data-subpanel="c2">
+      <div class="grid gap-6 xl:grid-cols-[1.12fr_.88fr]">
+        <article class="doc-card rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">컬렉션 목록</h3>
+              <p class="mt-1 text-sm text-slate-500">카드형 레이아웃으로 컬렉션 메타데이터를 보여주고 count / edit / delete 작업을 수행한다.</p>
+            </div>
+            <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">화면 기준</span>
+          </div>
+          <div class="mt-5 overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50">
+            <img src="/static/images/screenshot_02.png" alt="컬렉션 목록" class="w-full" />
+          </div>
+        </article>
+        <div class="space-y-6">
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">설명 포인트</h4>
+            <ul class="mt-4 list-disc space-y-2 pl-5 text-sm leading-7 text-slate-600">
+              <li>컬렉션명, 설명, engine, domain, name을 한 카드에 묶어 표시한다.</li><li>상세 메타데이터는 접기/펼치기 구조로 보조 정보에 적합하다.</li><li>metadata edit, count, delete 액션은 카드 단위로 실행된다.</li><li>목록 새로고침 버튼은 서버 상태를 강제로 다시 읽는 액션이다.</li>
+            </ul>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">관련 엔드포인트 / 상태</h4>
+            <div class="mt-4 space-y-3 text-sm text-slate-600">
+              <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>목록 조회</span><span class="font-semibold text-sky-700">GET /api/db/collections</span></div><div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>Count 조회</span><span class="font-semibold text-sky-700">GET /api/db/collections/:name/count</span></div><div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>삭제</span><span class="font-semibold text-sky-700">DELETE /api/db/collections/:name</span></div>
+            </div>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">구현 메모</h4>
+            <div class="mt-4 space-y-3"><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">카드형 목록은 컬렉션 수가 적당히 많을 때 가독성이 좋다.</div><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">삭제 후 빈 목록이 되더라도 empty state가 자연스럽게 노출되어야 한다.</div></div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="subpanel hidden space-y-6" data-group="col" data-subpanel="c3">
+      <div class="grid gap-6 xl:grid-cols-[1.12fr_.88fr]">
+        <article class="doc-card rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">Alias 관리</h3>
+              <p class="mt-1 text-sm text-slate-500">컬렉션 별 별칭(alias)을 저장하고, 별칭 삭제와 현재 alias 목록 확인을 수행한다.</p>
+            </div>
+            <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">화면 기준</span>
+          </div>
+          <div class="mt-5 overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50">
+            <img src="/static/images/screenshot_03.png" alt="Alias 관리" class="w-full" />
+          </div>
+        </article>
+        <div class="space-y-6">
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">설명 포인트</h4>
+            <ul class="mt-4 list-disc space-y-2 pl-5 text-sm leading-7 text-slate-600">
+              <li>좌측은 저장 영역, 우측 상단은 삭제, 우측 하단은 live 목록 확인 영역으로 분리된다.</li><li>대상 컬렉션 select는 현재 컬렉션 목록과 항상 동기화되어야 한다.</li><li>Alias는 여러 별칭을 쉼표 기준으로 입력받는 구조로 확장 가능하다.</li><li>현재 Alias 목록에는 collection → alias 관계가 그룹 형태로 표시된다.</li>
+            </ul>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">관련 엔드포인트 / 상태</h4>
+            <div class="mt-4 space-y-3 text-sm text-slate-600">
+              <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>Alias 저장</span><span class="font-semibold text-sky-700">POST /api/aliases/set</span></div><div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>Alias 삭제</span><span class="font-semibold text-sky-700">DELETE /api/aliases/delete</span></div><div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>Alias 목록</span><span class="font-semibold text-sky-700">GET /api/aliases</span></div>
+            </div>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">구현 메모</h4>
+            <div class="mt-4 space-y-3"><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">Alias 삭제는 오타 복구나 명명 정책 정리에 자주 사용될 수 있으므로 빠른 입력 UX가 좋다.</div><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">live 배지는 현재 목록이 서버 데이터와 동기화된다는 인상을 준다.</div></div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="subpanel hidden space-y-6" data-group="col" data-subpanel="c4">
+      <div class="grid gap-6 xl:grid-cols-[1.12fr_.88fr]">
+        <article class="doc-card rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">유틸리티</h3>
+              <p class="mt-1 text-sm text-slate-500">선택 컬렉션의 count 조회와 컬렉션 삭제를 분리해 보수적으로 처리하는 보조 탭이다.</p>
+            </div>
+            <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">화면 기준</span>
+          </div>
+          <div class="mt-5 overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50">
+            <img src="/static/images/screenshot_04.png" alt="유틸리티" class="w-full" />
+          </div>
+        </article>
+        <div class="space-y-6">
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">설명 포인트</h4>
+            <ul class="mt-4 list-disc space-y-2 pl-5 text-sm leading-7 text-slate-600">
+              <li>좌측 count 조회, 우측 삭제라는 위험도 차이에 맞춰 시각적 구분이 있다.</li><li>삭제 영역은 붉은 톤 테두리와 버튼으로 위험 액션임을 강조한다.</li><li>삭제 안내 문구는 목록/선택 박스 자동 갱신 규칙까지 설명해야 한다.</li>
+            </ul>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">관련 엔드포인트 / 상태</h4>
+            <div class="mt-4 space-y-3 text-sm text-slate-600">
+              <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>Count</span><span class="font-semibold text-sky-700">GET /api/db/collections/:name/count</span></div><div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>Delete</span><span class="font-semibold text-sky-700">DELETE /api/db/collections/:name</span></div>
+            </div>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">구현 메모</h4>
+            <div class="mt-4 space-y-3"><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">운영자 실수 방지를 위해 삭제 전 confirm 단계 또는 2차 확인을 추가할 수 있다.</div><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">유틸리티 탭은 상세 관리보다 단일 목적 액션에 집중하도록 단순 유지하는 것이 좋다.</div></div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="subpanel hidden space-y-6" data-group="col" data-subpanel="c5">
+      <div class="grid gap-6 xl:grid-cols-[1.12fr_.88fr]">
+        <article class="doc-card rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">작업 결과</h3>
+              <p class="mt-1 text-sm text-slate-500">컬렉션과 Alias 관련 작업 로그와 마지막 Raw API 응답을 함께 누적 표시한다.</p>
+            </div>
+            <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">화면 기준</span>
+          </div>
+          <div class="mt-5 overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50">
+            <img src="/static/images/screenshot_05.png" alt="작업 결과" class="w-full" />
+          </div>
+        </article>
+        <div class="space-y-6">
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">설명 포인트</h4>
+            <ul class="mt-4 list-disc space-y-2 pl-5 text-sm leading-7 text-slate-600">
+              <li>좌측 로그는 사람이 읽는 작업 이력, 우측은 디버깅용 JSON 응답이다.</li><li>로그 비우기/Raw 비우기 버튼은 테스트 환경에서 반복 확인에 유용하다.</li><li>실패·성공 메시지를 모두 남겨 재현성을 높이는 것이 중요하다.</li>
+            </ul>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">관련 엔드포인트 / 상태</h4>
+            <div class="mt-4 space-y-3 text-sm text-slate-600">
+              <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>로그 대상</span><span class="font-semibold text-sky-700">생성/목록/Alias/삭제</span></div><div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>Raw 응답</span><span class="font-semibold text-sky-700">마지막 API Result</span></div>
+            </div>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">구현 메모</h4>
+            <div class="mt-4 space-y-3"><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">운영자 관점에서는 로그, 개발자 관점에서는 Raw JSON이 중요하므로 두 패널이 모두 필요하다.</div><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">결과 탭은 다른 탭에서 실행된 액션도 누적 반영되어야 한다.</div></div>
+          </section>
+        </div>
+      </div>
+    </div></section>
+        <section id="documents" class="panel hidden space-y-6"><div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6"><div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"><div><h2 class="text-xl font-bold text-slate-900">문서 관리 가이드</h2><p class="mt-1 text-sm text-slate-500">텍스트 삽입 / 파일 업로드 / 검색 / 조회 / 삭제 / 결과 탭의 흐름을 기준으로 설명한다.</p></div><div class="flex flex-wrap gap-2"><button class="subnav-btn rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold" data-group="doc" data-sub="d1" data-active="true">텍스트 삽입</button><button class="subnav-btn rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold" data-group="doc" data-sub="d2" data-active="false">파일 업로드</button><button class="subnav-btn rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold" data-group="doc" data-sub="d3" data-active="false">검색</button><button class="subnav-btn rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold" data-group="doc" data-sub="d4" data-active="false">조회</button><button class="subnav-btn rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold" data-group="doc" data-sub="d5" data-active="false">삭제</button><button class="subnav-btn rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold" data-group="doc" data-sub="d6" data-active="false">결과</button></div></div></div>
+    <div class="subpanel space-y-6" data-group="doc" data-subpanel="d1">
+      <div class="grid gap-6 xl:grid-cols-[1.12fr_.88fr]">
+        <article class="doc-card rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">텍스트 문서 삽입</h3>
+              <p class="mt-1 text-sm text-slate-500">본문 텍스트를 직접 입력하여 chunking + embedding + DB 저장을 수행한다.</p>
+            </div>
+            <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">화면 기준</span>
+          </div>
+          <div class="mt-5 overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50">
+            <img src="/static/images/screenshot_06.png" alt="텍스트 문서 삽입" class="w-full" />
+          </div>
+        </article>
+        <div class="space-y-6">
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">설명 포인트</h4>
+            <ul class="mt-4 list-disc space-y-2 pl-5 text-sm leading-7 text-slate-600">
+              <li>Collection, Doc ID, 제목, 카테고리, 출처, 본문 텍스트를 입력한다.</li><li>Metadata 미리보기는 title / source / category 구조를 보여준다.</li><li>Doc ID를 비우면 자동 생성되며, 사용자가 입력 시 강제 id로 처리된다.</li><li>우측 패널은 ingest 엔드포인트와 입력 파라미터를 설명한다.</li>
+            </ul>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">관련 엔드포인트 / 상태</h4>
+            <div class="mt-4 space-y-3 text-sm text-slate-600">
+              <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>엔드포인트</span><span class="font-semibold text-sky-700">POST /api/db/documents/ingest</span></div><div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>필수 파라미터</span><span class="font-semibold text-sky-700">collection, text</span></div><div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>메타데이터</span><span class="font-semibold text-sky-700">title / source / category</span></div>
+            </div>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">구현 메모</h4>
+            <div class="mt-4 space-y-3"><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">본문이 길어질 경우 스크롤 처리와 textarea 높이 정책이 중요하다.</div><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">컬렉션 select는 반드시 공통 컬렉션 목록 API와 연결되어야 한다.</div></div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="subpanel hidden space-y-6" data-group="doc" data-subpanel="d2">
+      <div class="grid gap-6 xl:grid-cols-[1.12fr_.88fr]">
+        <article class="doc-card rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">파일 업로드 삽입</h3>
+              <p class="mt-1 text-sm text-slate-500">여러 파일을 업로드하고 서버에서 순차 저장하는 FORM-DATA 기반 탭이다.</p>
+            </div>
+            <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">화면 기준</span>
+          </div>
+          <div class="mt-5 overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50">
+            <img src="/static/images/screenshot_07.png" alt="파일 업로드 삽입" class="w-full" />
+          </div>
+        </article>
+        <div class="space-y-6">
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">설명 포인트</h4>
+            <ul class="mt-4 list-disc space-y-2 pl-5 text-sm leading-7 text-slate-600">
+              <li>Collection, Doc ID Prefix, 카테고리, 출처, Files 입력을 받는다.</li><li>파일 선택 수는 Hero 요약 카드와 동기화된다.</li><li>메타데이터 미리보기는 업로드 공통 값(category, source)을 보여준다.</li><li>선택된 파일이 없을 때는 우측 상태 카드에 empty state를 표시한다.</li>
+            </ul>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">관련 엔드포인트 / 상태</h4>
+            <div class="mt-4 space-y-3 text-sm text-slate-600">
+              <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>엔드포인트</span><span class="font-semibold text-sky-700">POST /api/db/documents/upload</span></div><div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>전송 형식</span><span class="font-semibold text-sky-700">multipart/form-data</span></div><div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>파일 파라미터</span><span class="font-semibold text-sky-700">files[]</span></div>
+            </div>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">구현 메모</h4>
+            <div class="mt-4 space-y-3"><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">다중 업로드에서는 진행 상태 또는 업로드 결과 목록이 있으면 운영성이 좋아진다.</div><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">대용량 파일이 포함되면 비동기 업로드 또는 chunk 업로드 고려가 필요하다.</div></div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="subpanel hidden space-y-6" data-group="doc" data-subpanel="d3">
+      <div class="grid gap-6 xl:grid-cols-[1.12fr_.88fr]">
+        <article class="doc-card rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">문서 검색</h3>
+              <p class="mt-1 text-sm text-slate-500">벡터 유사도 검색으로 관련 문서를 찾는 검색 탭이다.</p>
+            </div>
+            <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">화면 기준</span>
+          </div>
+          <div class="mt-5 overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50">
+            <img src="/static/images/screenshot_08.png" alt="문서 검색" class="w-full" />
+          </div>
+        </article>
+        <div class="space-y-6">
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">설명 포인트</h4>
+            <ul class="mt-4 list-disc space-y-2 pl-5 text-sm leading-7 text-slate-600">
+              <li>Collection, Top K, Where(JSON), Query 입력을 받는다.</li><li>검색 결과는 Raw JSON 또는 별도 결과 리스트 형태로 표시할 수 있다.</li><li>Where(JSON)은 메타데이터 필터로 사용되며 JSON 형식 오류 검증이 필요하다.</li><li>Top K는 기본값을 두되 숫자 검증이 필요하다.</li>
+            </ul>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">관련 엔드포인트 / 상태</h4>
+            <div class="mt-4 space-y-3 text-sm text-slate-600">
+              <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>엔드포인트</span><span class="font-semibold text-sky-700">GET /api/db/search</span></div><div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>필수</span><span class="font-semibold text-sky-700">collection, query</span></div><div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>옵션</span><span class="font-semibold text-sky-700">k, where</span></div>
+            </div>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">구현 메모</h4>
+            <div class="mt-4 space-y-3"><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">검색 버튼 이후 결과가 없을 때도 명확한 empty result 메시지가 필요하다.</div><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">Where 예시 placeholder는 사용자의 JSON 작성 부담을 줄여준다.</div></div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="subpanel hidden space-y-6" data-group="doc" data-subpanel="d4">
+      <div class="grid gap-6 xl:grid-cols-[1.12fr_.88fr]">
+        <article class="doc-card rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">전체 문서 조회</h3>
+              <p class="mt-1 text-sm text-slate-500">컬렉션 전체 문서를 받아와 테이블로 표시하고, 클라이언트 측 필터와 수정 기능을 제공한다.</p>
+            </div>
+            <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">화면 기준</span>
+          </div>
+          <div class="mt-5 overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50">
+            <img src="/static/images/screenshot_09.png" alt="전체 문서 조회" class="w-full" />
+          </div>
+        </article>
+        <div class="space-y-6">
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">설명 포인트</h4>
+            <ul class="mt-4 list-disc space-y-2 pl-5 text-sm leading-7 text-slate-600">
+              <li>Batch Size와 Start Offset으로 조회 범위를 제어한다.</li><li>Where(JSON) 필터와 테이블 필터는 역할이 다르다. 서버 조건 vs 클라이언트 필터.</li><li>상단 배지로 GET /api/db/documents, POST /api/db/documents/upsert, JS Filter를 명시한다.</li><li>테이블 행 단위 편집은 수정 모달 또는 inline edit 방식으로 확장될 수 있다.</li>
+            </ul>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">관련 엔드포인트 / 상태</h4>
+            <div class="mt-4 space-y-3 text-sm text-slate-600">
+              <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>조회</span><span class="font-semibold text-sky-700">GET /api/db/documents</span></div><div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>수정</span><span class="font-semibold text-sky-700">POST /api/db/documents/upsert</span></div><div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>필터</span><span class="font-semibold text-sky-700">JS client filter</span></div>
+            </div>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">구현 메모</h4>
+            <div class="mt-4 space-y-3"><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">조회 탭은 데이터량이 많아질 가능성이 높으므로 pagination 또는 virtual scroll을 검토할 수 있다.</div><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">클라이언트 필터는 이미 받은 rows에만 적용된다는 점을 안내 문구로 분명히 보여준다.</div></div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="subpanel hidden space-y-6" data-group="doc" data-subpanel="d5">
+      <div class="grid gap-6 xl:grid-cols-[1.12fr_.88fr]">
+        <article class="doc-card rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">문서 삭제</h3>
+              <p class="mt-1 text-sm text-slate-500">삭제 대상 문서를 먼저 조회한 뒤, 선택 삭제 또는 행 삭제를 수행하는 위험 액션 탭이다.</p>
+            </div>
+            <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">화면 기준</span>
+          </div>
+          <div class="mt-5 overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50">
+            <img src="/static/images/screenshot_10.png" alt="문서 삭제" class="w-full" />
+          </div>
+        </article>
+        <div class="space-y-6">
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">설명 포인트</h4>
+            <ul class="mt-4 list-disc space-y-2 pl-5 text-sm leading-7 text-slate-600">
+              <li>조회 탭과 유사한 구조지만 붉은 강조색으로 삭제 맥락을 명확히 한다.</li><li>삭제 대상 전체 조회 후 선택 삭제, 필터 초기화 흐름을 제공한다.</li><li>삭제용 Where(JSON)과 테이블 필터를 함께 제공해 정확한 대상 선택을 돕는다.</li><li>행 삭제와 선택 삭제 구분은 실수 방지에 중요하다.</li>
+            </ul>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">관련 엔드포인트 / 상태</h4>
+            <div class="mt-4 space-y-3 text-sm text-slate-600">
+              <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>엔드포인트</span><span class="font-semibold text-sky-700">DELETE /api/db/documents</span></div><div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>보조 액션</span><span class="font-semibold text-sky-700">row delete / selected delete</span></div>
+            </div>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">구현 메모</h4>
+            <div class="mt-4 space-y-3"><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">삭제는 조회 단계 없이 바로 실행하지 않도록 현재 구조를 유지하는 것이 안전하다.</div><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">실행 후 로그와 Raw API 응답에서 삭제 건수/대상을 확인 가능해야 한다.</div></div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="subpanel hidden space-y-6" data-group="doc" data-subpanel="d6">
+      <div class="grid gap-6 xl:grid-cols-[1.12fr_.88fr]">
+        <article class="doc-card rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">작업 결과</h3>
+              <p class="mt-1 text-sm text-slate-500">문서 삽입/업로드/검색/조회/삭제 작업 로그와 Raw API 응답을 누적 관리한다.</p>
+            </div>
+            <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">화면 기준</span>
+          </div>
+          <div class="mt-5 overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50">
+            <img src="/static/images/screenshot_11.png" alt="작업 결과" class="w-full" />
+          </div>
+        </article>
+        <div class="space-y-6">
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">설명 포인트</h4>
+            <ul class="mt-4 list-disc space-y-2 pl-5 text-sm leading-7 text-slate-600">
+              <li>문서 관련 모든 탭의 액션이 이 결과 탭으로 모인다.</li><li>작업 로그는 사용자 친화적인 텍스트, Raw API Result는 개발용 원문이다.</li><li>비우기 버튼은 테스트 시나리오 반복에 유용하다.</li>
+            </ul>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">관련 엔드포인트 / 상태</h4>
+            <div class="mt-4 space-y-3 text-sm text-slate-600">
+              <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>로그 범위</span><span class="font-semibold text-sky-700">ingest/upload/search/read/delete</span></div><div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>Raw 응답</span><span class="font-semibold text-sky-700">마지막 API Result</span></div>
+            </div>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">구현 메모</h4>
+            <div class="mt-4 space-y-3"><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">문서 화면은 기능이 많아 결과 탭의 중요도가 특히 높다.</div><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">가능하면 성공/실패 badge나 timestamp를 함께 표기하면 운영성이 더 좋아진다.</div></div>
+          </section>
+        </div>
+      </div>
+    </div></section>
+        <section id="webdocs" class="panel hidden space-y-6"><div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6"><div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"><div><h2 class="text-xl font-bold text-slate-900">웹문서 처리 가이드</h2><p class="mt-1 text-sm text-slate-500">1. URL 입력 / GPT 추천 → 2. URL 추출 → 3. 임베딩 추출 → 4. 결과 로그 단계로 구성된다.</p></div><div class="flex flex-wrap gap-2"><button class="subnav-btn rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold" data-group="web" data-sub="w1" data-active="true">1단계</button><button class="subnav-btn rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold" data-group="web" data-sub="w2" data-active="false">2단계</button><button class="subnav-btn rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold" data-group="web" data-sub="w3" data-active="false">3단계</button><button class="subnav-btn rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold" data-group="web" data-sub="w4" data-active="false">4단계</button></div></div></div>
+    <div class="subpanel space-y-6" data-group="web" data-subpanel="w1">
+      <div class="grid gap-6 xl:grid-cols-[1.12fr_.88fr]">
+        <article class="doc-card rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">1단계 — URL 입력 / iframe / GPT 추천</h3>
+              <p class="mt-1 text-sm text-slate-500">페이지 URL을 입력하고 iframe 미리보기, 요소 선택, GPT 추천을 함께 처리하는 시작 단계다.</p>
+            </div>
+            <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">화면 기준</span>
+          </div>
+          <div class="mt-5 overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50">
+            <img src="/static/images/screenshot_12.png" alt="1단계 — URL 입력 / iframe / GPT 추천" class="w-full" />
+          </div>
+        </article>
+        <div class="space-y-6">
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">설명 포인트</h4>
+            <ul class="mt-4 list-disc space-y-2 pl-5 text-sm leading-7 text-slate-600">
+              <li>페이지 불러오기, GPT 추천, 추천 요소 강조, 선택 초기화, 추출 단계 이동 버튼이 있다.</li><li>iframe 미리보기는 hover/선택/추천 강조 상태를 시각적으로 다르게 표현한다.</li><li>선택 요소 영역은 마지막 클릭 요소 1개만 유지한다.</li><li>추천 결과는 추천 ID / 추천 CLASS 텍스트영역으로 관리된다.</li>
+            </ul>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">관련 엔드포인트 / 상태</h4>
+            <div class="mt-4 space-y-3 text-sm text-slate-600">
+              <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>미리보기</span><span class="font-semibold text-sky-700">POST /fetch_html</span></div><div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>추천 연동</span><span class="font-semibold text-sky-700">GPT 추천 로직</span></div><div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>다음 단계</span><span class="font-semibold text-sky-700">preview → extract</span></div>
+            </div>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">구현 메모</h4>
+            <div class="mt-4 space-y-3"><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">raw html 출력은 제거하고 iframe만 유지한 설계 의도가 중요하다.</div><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">선택된 요소 정보는 이후 embed 단계의 element_id / element_class 후보로 이어질 수 있다.</div></div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="subpanel hidden space-y-6" data-group="web" data-subpanel="w2">
+      <div class="grid gap-6 xl:grid-cols-[1.12fr_.88fr]">
+        <article class="doc-card rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">2단계 — URL 추출 / 삭제 / 추가</h3>
+              <p class="mt-1 text-sm text-slate-500">기준 URL에서 링크를 추출하고, 수동 추가·선택 삭제·전체 비우기를 지원한다.</p>
+            </div>
+            <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">화면 기준</span>
+          </div>
+          <div class="mt-5 overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50">
+            <img src="/static/images/screenshot_13.png" alt="2단계 — URL 추출 / 삭제 / 추가" class="w-full" />
+          </div>
+        </article>
+        <div class="space-y-6">
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">설명 포인트</h4>
+            <ul class="mt-4 list-disc space-y-2 pl-5 text-sm leading-7 text-slate-600">
+              <li>기준 URL, 도메인(선택), 수동 URL 추가 입력을 제공한다.</li><li>추출된 URL 목록은 행별 삭제와 선택 삭제를 지원한다.</li><li>우측 패널에서 선택 URL 추가 / 전체 URL 추가 / 임베딩 단계 이동을 처리한다.</li><li>추출 단계는 preview 단계 URL을 이어받을 수 있어야 한다.</li>
+            </ul>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">관련 엔드포인트 / 상태</h4>
+            <div class="mt-4 space-y-3 text-sm text-slate-600">
+              <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>추출</span><span class="font-semibold text-sky-700">POST /extract_urls</span></div><div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>단계 이동</span><span class="font-semibold text-sky-700">extract → embed</span></div>
+            </div>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">구현 메모</h4>
+            <div class="mt-4 space-y-3"><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">도메인 필터는 외부 링크를 제외하고 동일 사이트 링크만 추출하고 싶을 때 유용하다.</div><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">추출 URL 수와 임베딩 대상 수는 상단 요약 카드와 동기화된다.</div></div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="subpanel hidden space-y-6" data-group="web" data-subpanel="w3">
+      <div class="grid gap-6 xl:grid-cols-[1.12fr_.88fr]">
+        <article class="doc-card rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">3단계 — 임베딩 추출</h3>
+              <p class="mt-1 text-sm text-slate-500">선택한 URL 목록을 컬렉션에 임베딩하기 전, 컬렉션 선택·실시간 채널·메타정보를 관리하는 단계다.</p>
+            </div>
+            <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">화면 기준</span>
+          </div>
+          <div class="mt-5 overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50">
+            <img src="/static/images/screenshot_14.png" alt="3단계 — 임베딩 추출" class="w-full" />
+          </div>
+        </article>
+        <div class="space-y-6">
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">설명 포인트</h4>
+            <ul class="mt-4 list-disc space-y-2 pl-5 text-sm leading-7 text-slate-600">
+              <li>대상 컬렉션 select가 핵심 입력이며, 컬렉션 새로고침 버튼이 있다.</li><li>실시간 채널 연결 상태와 진행 로그 영역이 별도로 있다.</li><li>element_id, element_class, meta(JSON)는 선택적으로 전달될 수 있다.</li><li>우측에는 현재 임베딩 대상 URL 목록이 표시된다.</li>
+            </ul>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">관련 엔드포인트 / 상태</h4>
+            <div class="mt-4 space-y-3 text-sm text-slate-600">
+              <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>임베딩</span><span class="font-semibold text-sky-700">POST /embed_urls</span></div><div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>실시간</span><span class="font-semibold text-sky-700">socket / 채널 연결</span></div><div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>저장 대상</span><span class="font-semibold text-sky-700">ChromaDB collection</span></div>
+            </div>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">구현 메모</h4>
+            <div class="mt-4 space-y-3"><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">긴 임베딩 작업을 고려해 실시간 로그와 진행 상태는 필수다.</div><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">embed 단계는 URL 목록이 비어 있으면 실행 불가 상태를 분명하게 보여줘야 한다.</div></div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="subpanel hidden space-y-6" data-group="web" data-subpanel="w4">
+      <div class="grid gap-6 xl:grid-cols-[1.12fr_.88fr]">
+        <article class="doc-card rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">4단계 — 결과</h3>
+              <p class="mt-1 text-sm text-slate-500">미리보기, 추출, 임베딩 과정에서 발생한 작업 로그와 마지막 Raw API 응답을 누적 확인한다.</p>
+            </div>
+            <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">화면 기준</span>
+          </div>
+          <div class="mt-5 overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50">
+            <img src="/static/images/screenshot_15.png" alt="4단계 — 결과" class="w-full" />
+          </div>
+        </article>
+        <div class="space-y-6">
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">설명 포인트</h4>
+            <ul class="mt-4 list-disc space-y-2 pl-5 text-sm leading-7 text-slate-600">
+              <li>좌측 작업 결과 패널은 최근 이벤트를 사람이 읽기 쉬운 형태로 표시한다.</li><li>우측 Raw API Result는 스크롤 가능한 원문 JSON을 제공한다.</li><li>로그 비우기 / Raw 비우기 버튼으로 테스트 반복이 쉽다.</li>
+            </ul>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">관련 엔드포인트 / 상태</h4>
+            <div class="mt-4 space-y-3 text-sm text-slate-600">
+              <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>로그 범위</span><span class="font-semibold text-sky-700">preview/extract/embed 전체</span></div><div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"><span>Raw 응답</span><span class="font-semibold text-sky-700">마지막 API Result</span></div>
+            </div>
+          </section>
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
+            <h4 class="text-base font-bold text-slate-900">구현 메모</h4>
+            <div class="mt-4 space-y-3"><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">웹문서는 다단계 흐름이라 어느 단계에서 문제가 났는지 추적할 수 있도록 로그 문맥이 중요하다.</div><div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">방금, n건 등의 요약 텍스트는 운영자에게 빠른 피드백을 준다.</div></div>
+          </section>
+        </div>
+      </div>
+    </div></section>
+
+        <section id="kakao" class="panel hidden space-y-6">
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <div class="inline-flex items-center gap-2 rounded-full bg-yellow-50 px-3 py-1 text-xs font-semibold text-yellow-700">
+                  <i class="fas fa-comment"></i>
+                  KakaoTalk Channel Integration
+                </div>
+                <h2 class="mt-3 text-2xl font-extrabold tracking-tight text-slate-900">카카오톡 채널 RAG 연동 가이드</h2>
+                <p class="mt-2 max-w-4xl text-sm leading-7 text-slate-500">
+                  카카오톡 채널에서 들어온 사용자 발화를 <code class="rounded bg-slate-100 px-1.5 py-0.5">/api/rag/kakao</code>로 전달하고,
+                  서버가 RAG 답변을 카카오 응답 포맷으로 반환하는 연동 방식입니다. 현재 코드 기준으로 즉시 응답 방식과 callbackUrl 비동기 응답 방식을 모두 지원합니다.
+                </p>
+              </div>
+              <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:min-w-[520px]">
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div class="text-xs text-slate-500">Skill Endpoint</div>
+                  <div class="mt-2 text-base font-bold text-slate-900">/api/rag/kakao</div>
+                  <div class="mt-1 text-xs text-slate-500">POST JSON</div>
+                </div>
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div class="text-xs text-slate-500">응답 포맷</div>
+                  <div class="mt-2 text-base font-bold text-slate-900">simpleText</div>
+                  <div class="mt-1 text-xs text-slate-500">version 2.0</div>
+                </div>
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div class="text-xs text-slate-500">Callback 지원</div>
+                  <div class="mt-2 text-base font-bold text-slate-900">useCallback</div>
+                  <div class="mt-1 text-xs text-slate-500">긴 RAG 답변용</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="grid gap-6 xl:grid-cols-[1.05fr_.95fr]">
+            <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+              <h3 class="text-lg font-bold text-slate-900">1. 전체 연동 흐름</h3>
+              <div class="mt-5 space-y-4">
+                <div class="flex gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white font-bold">1</div>
+                  <div>
+                    <div class="font-bold text-slate-900">카카오톡 채널에서 사용자 메시지 입력</div>
+                    <p class="mt-1 text-sm leading-6 text-slate-600">사용자가 채널 채팅방에서 질문을 입력하면 카카오 스킬 서버로 JSON payload가 전달됩니다.</p>
+                  </div>
+                </div>
+                <div class="flex gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white font-bold">2</div>
+                  <div>
+                    <div class="font-bold text-slate-900">FastAPI가 발화와 callbackUrl 추출</div>
+                    <p class="mt-1 text-sm leading-6 text-slate-600">
+                      서버는 <code>userRequest.utterance</code>, <code>utterance</code>, <code>value.resolved</code>, <code>value.origin</code>, <code>message</code> 순서로 사용자 메시지를 읽습니다.
+                      callbackUrl은 <code>userRequest.callbackUrl</code>, <code>callbackUrl</code>, <code>action.clientExtra.callbackUrl</code> 순서로 확인합니다.
+                    </p>
+                  </div>
+                </div>
+                <div class="flex gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white font-bold">3</div>
+                  <div>
+                    <div class="font-bold text-slate-900">RAG 답변 생성</div>
+                    <p class="mt-1 text-sm leading-6 text-slate-600">
+                      <code>answer_query_stream()</code>을 내부적으로 실행하지만, 카카오 응답에서는 streaming이 아니라 최종 답변 텍스트만 모아서 반환합니다.
+                    </p>
+                  </div>
+                </div>
+                <div class="flex gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white font-bold">4</div>
+                  <div>
+                    <div class="font-bold text-slate-900">카카오 simpleText 응답</div>
+                    <p class="mt-1 text-sm leading-6 text-slate-600">
+                      callbackUrl이 없으면 즉시 <code>template.outputs.simpleText.text</code>로 답변하고, callbackUrl이 있으면 먼저 <code>useCallback: true</code>를 반환한 뒤 백그라운드 스레드가 callbackUrl로 최종 답변을 전송합니다.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="space-y-6">
+              <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+                <h3 class="text-lg font-bold text-slate-900">2. 카카오 스킬 서버 설정값</h3>
+                <div class="mt-4 space-y-3 text-sm text-slate-600">
+                  <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <span>Method</span><span class="font-semibold text-slate-900">POST</span>
+                  </div>
+                  <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <span>Content-Type</span><span class="font-semibold text-slate-900">application/json</span>
+                  </div>
+                  <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <span>Endpoint</span><span class="font-semibold text-sky-700">https://도메인/api/rag/kakao</span>
+                  </div>
+                  <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <span>Response</span><span class="font-semibold text-emerald-700">Kakao v2 simpleText</span>
+                  </div>
+                </div>
+                <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
+                  카카오 서버에서 접근 가능해야 하므로 로컬 주소가 아니라 외부 HTTPS 도메인 또는 터널링 URL을 사용해야 합니다.
+                </div>
+              </div>
+
+              <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+                <h3 class="text-lg font-bold text-slate-900">3. 서버 동작 기준</h3>
+                <div class="mt-4 space-y-3 text-sm text-slate-600">
+                  <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <b class="text-slate-900">로그인 필수 아님</b>
+                    <p class="mt-1 leading-6">카카오 route는 <code>require_login()</code>을 호출하지 않습니다. 로그인 세션이 있으면 로그를 저장하고, 없으면 RAG 답변만 수행합니다.</p>
+                  </div>
+                  <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <b class="text-slate-900">마크다운 금지 프롬프트 자동 추가</b>
+                    <p class="mt-1 leading-6">사용자 질문 뒤에 “일반 텍스트로만 답변” 지시가 붙습니다. 카카오 채팅 UI에서 깨지는 마크다운을 막기 위한 처리입니다.</p>
+                  </div>
+                  <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <b class="text-slate-900">Alias 해석</b>
+                    <p class="mt-1 leading-6">전달된 collection은 내부에서 alias를 실제 collection_name으로 해석합니다.</p>
+                  </div>
+                  <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <b class="text-slate-900">Fallback 메시지</b>
+                    <p class="mt-1 leading-6">질문이 없으면 “사용자 메시지를 읽지 못했습니다.”, 오류가 나면 “지금 답변이 어려워요. 잠시 후 다시 시도해 주세요.”를 반환합니다.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="grid gap-6 xl:grid-cols-2">
+            <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+              <h3 class="text-lg font-bold text-slate-900">4. 요청 Payload 예시</h3>
+              <p class="mt-1 text-sm text-slate-500">카카오 기본 payload 외에 collection, model, k, where 등을 함께 넘길 수 있습니다.</p>
+              <pre class="thin-scrollbar mt-4 max-h-[520px] overflow-auto rounded-2xl bg-slate-950 p-5 text-sm leading-7 text-emerald-300"><code>{
+  "userRequest": {
+    "utterance": "장학금 신청 방법 알려줘",
+    "callbackUrl": "https://callback-url-from-kakao"
+  },
+  "collection": "scholarship",
+  "model": "gemma3",
+  "mode": "normal",
+  "think": false,
+  "k": 5,
+  "where": "{\"category\":\"장학금\"}",
+  "sid": "kakao-user-session-id",
+  "history_limit": 20
+}</code></pre>
+              <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+                <b class="text-slate-900">where 주의:</b> 현재 route는 <code>parse_json_str()</code>로 처리하므로 JSON 객체를 문자열로 넘겨도 됩니다.
+              </div>
+            </div>
+
+            <div class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+              <h3 class="text-lg font-bold text-slate-900">5. 응답 포맷 예시</h3>
+              <div class="mt-4 space-y-4">
+                <div>
+                  <div class="mb-2 text-sm font-bold text-slate-900">즉시 응답</div>
+                  <pre class="thin-scrollbar max-h-[260px] overflow-auto rounded-2xl bg-slate-950 p-5 text-sm leading-7 text-emerald-300"><code>{
+  "version": "2.0",
+  "template": {
+    "outputs": [
+      {
+        "simpleText": {
+          "text": "장학금 신청 방법은 ..."
+        }
+      }
+    ]
+  }
+}</code></pre>
+                </div>
+                <div>
+                  <div class="mb-2 text-sm font-bold text-slate-900">callbackUrl이 있을 때 1차 응답</div>
+                  <pre class="thin-scrollbar max-h-[180px] overflow-auto rounded-2xl bg-slate-950 p-5 text-sm leading-7 text-emerald-300"><code>{
+  "version": "2.0",
+  "useCallback": true
+}</code></pre>
+                </div>
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+                  callbackUrl이 있으면 서버는 백그라운드 thread를 띄우고, 최종 답변을 callbackUrl로 다시 POST합니다. callback POST timeout은 15초입니다.
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+            <h3 class="text-lg font-bold text-slate-900">6. 테스트 절차</h3>
+            <div class="mt-5 grid gap-4 lg:grid-cols-3">
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div class="font-bold text-slate-900">서버 단독 테스트</div>
+                <p class="mt-2 text-sm leading-6 text-slate-600">curl 또는 Postman으로 <code>/api/rag/kakao</code>에 JSON을 보내 simpleText 응답이 오는지 확인합니다.</p>
+              </div>
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div class="font-bold text-slate-900">카카오 스킬 테스트</div>
+                <p class="mt-2 text-sm leading-6 text-slate-600">카카오 스킬 서버 URL에 외부 HTTPS endpoint를 입력하고 발화 테스트를 실행합니다.</p>
+              </div>
+              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div class="font-bold text-slate-900">실채널 테스트</div>
+                <p class="mt-2 text-sm leading-6 text-slate-600">채널 채팅방에서 질문 후 답변 속도, callback 응답, 로그 저장, collection alias 해석을 확인합니다.</p>
+              </div>
+            </div>
+
+            <pre class="thin-scrollbar mt-5 overflow-auto rounded-2xl bg-slate-950 p-5 text-sm leading-7 text-emerald-300"><code>curl -X POST "https://도메인/api/rag/kakao" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userRequest": {"utterance": "입학 장학금 알려줘"},
+    "collection": "scholarship",
+    "k": 5,
+    "history_limit": 20
+  }'</code></pre>
+          </section>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const mobileMenuOpen = document.getElementById('mobileMenuOpen');
+    const sidebar = document.getElementById('sidebar');
+    const mobileSidebarBackdrop = document.getElementById('mobileSidebarBackdrop');
+    function openSidebar(){ sidebar.classList.remove('-translate-x-full'); mobileSidebarBackdrop.classList.remove('hidden'); }
+    function closeSidebar(){ sidebar.classList.add('-translate-x-full'); mobileSidebarBackdrop.classList.add('hidden'); }
+    mobileMenuOpen?.addEventListener('click', openSidebar);
+    mobileSidebarBackdrop?.addEventListener('click', closeSidebar);
+
+    const mainTabs = document.querySelectorAll('.main-tab');
+    const panels = document.querySelectorAll('.panel');
+    mainTabs.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.target;
+        mainTabs.forEach(b => b.dataset.active = 'false');
+        btn.dataset.active = 'true';
+        panels.forEach(p => p.classList.add('hidden'));
+        document.getElementById(target)?.classList.remove('hidden');
+      });
+    });
+
+    document.querySelectorAll('.subnav-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const group = btn.dataset.group;
+        const target = btn.dataset.sub;
+        document.querySelectorAll(`.subnav-btn[data-group="${group}"]`).forEach(b => b.dataset.active = 'false');
+        btn.dataset.active = 'true';
+        document.querySelectorAll(`.subpanel[data-group="${group}"]`).forEach(p => p.classList.add('hidden'));
+        document.querySelector(`.subpanel[data-group="${group}"][data-subpanel="${target}"]`)?.classList.remove('hidden');
+      });
+    });
+  </script>
+</body>
+</html>

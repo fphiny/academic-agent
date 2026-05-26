@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          boxShadow: {
+            soft: '0 10px 30px rgba(15, 23, 42, 0.08)',
+            panel: '0 18px 40px rgba(15, 23, 42, 0.12)'
+          },
+          keyframes: {
+            slideInRight: { '0%': { transform: 'translateX(100%)' }, '100%': { transform: 'translateX(0)' } },
+            slideUp: { '0%': { transform: 'translateY(16px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } }
+          },
+          animation: {
+            'slide-in-right': 'slideInRight .25s ease-out',
+            'slide-up': 'slideUp .35s ease-out forwards'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: Pretendard, 'Noto Sans KR', system-ui, sans-serif; }
+    .thin-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+    .thin-scrollbar::-webkit-scrollbar-thumb { background: rgba(148,163,184,.45); border-radius: 999px; }
+    .thin-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  </style>
+</head>
+
+<body class="bg-slate-100 text-slate-900">
+  <div class="min-h-screen lg:flex lg:h-screen overflow-hidden">
+    <!-- PC Sidebar -->
+    <aside class="hidden lg:flex w-72 shrink-0 flex-col border-r border-slate-200 bg-white h-screen">
+      <div class="px-5 py-6 border-b border-slate-200">
+        <div class="flex items-center gap-3">
+          <div class="h-12 w-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-soft">
+            <i class="fas fa-graduation-cap"></i>
+          </div>
+          <div>
+            <div class="text-lg font-extrabold tracking-tight">한림대학교 AI 튜터</div>
+            <div class="text-xs text-slate-500">Dashboard & Career Guide</div>
+          </div>
+        </div>
+
+        <div class="mt-5 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <div class="text-xs text-slate-500">현재 사용자</div>
+          <div class="mt-1 text-lg font-bold">{{ student_id }}</div>
+          <div class="mt-1 text-xs text-slate-500">대시보드 분석 및 진로채팅 사용 가능</div>
+        </div>
+      </div>
+
+      <div class="px-4 py-6 flex-1 min-h-0 flex flex-col">
+        <div class="px-2 text-xs font-semibold tracking-[0.24em] text-slate-400 uppercase">Menu</div>
+
+        <nav class="mt-4 space-y-2">
+          <a href="/dashboard" class="flex items-center gap-3 rounded-2xl bg-slate-900 px-4 py-4 text-white shadow-soft">
+            <span class="h-11 w-11 rounded-xl bg-white/10 flex items-center justify-center">
+              <i class="fas fa-chart-pie"></i>
+            </span>
+            <span>
+              <span class="block text-sm font-semibold">Dashboard</span>
+              <span class="block text-xs text-slate-300">성적 분석 결과 보기</span>
+            </span>
+          </a>
+
+          <a href="/rag" class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-slate-900 hover:bg-slate-50">
+            <span class="h-11 w-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+              <i class="fas fa-comments"></i>
+            </span>
+            <span>
+              <span class="block text-sm font-semibold">채팅</span>
+              <span class="block text-xs text-slate-500">일반 채팅 / RAG</span>
+            </span>
+          </a>
+        </nav>
+
+        <div class="mt-auto pt-6">
+          <a href="/logout" class="flex items-center justify-center gap-2 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-200">
+            <i class="fas fa-right-from-bracket"></i>로그아웃
+          </a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <div class="flex-1 min-w-0 h-screen overflow-y-auto thin-scrollbar">
+      <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
+        <div class="flex items-center justify-between gap-3 px-4 lg:px-8 py-4">
+          <div class="flex items-center gap-3 lg:gap-6 min-w-0">
+            <button id="mobileMenuOpen" type="button" class="lg:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white text-slate-700">
+              <i class="fas fa-bars"></i>
+            </button>
+
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="h-11 w-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                <i class="fas fa-graduation-cap"></i>
+              </div>
+              <div class="min-w-0">
+                <div class="font-extrabold truncate">한림대학교 AI 서비스</div>
+                <div class="text-xs text-slate-500">Dashboard</div>
+              </div>
+            </div>
+
+            <nav class="hidden md:flex items-center gap-2">
+              <a href="/rag" class="rounded-xl px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">채팅</a>
+              <a href="/dashboard" class="rounded-xl bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700">Dashboard</a>
+            </nav>
+          </div>
+
+          <div class="relative">
+            <button id="myMenuButton" type="button" class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 shadow-soft">
+              <span class="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600">MY</span>
+              <span class="hidden sm:block text-right">
+                <span class="block text-sm font-semibold">{{ student_id }}</span>
+                <span class="block text-xs text-slate-500">내 메뉴</span>
+              </span>
+            </button>
+
+            <div id="myMenu" class="hidden absolute right-0 mt-2 w-52 rounded-2xl border border-slate-200 bg-white p-2 shadow-panel">
+              {% if can_access_db %}
+              <a href="/rag/documents" class="block rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-100">DB 접속</a>
+              {% endif %}
+              <a href="/logout" class="block rounded-xl px-3 py-2 text-sm text-rose-600 hover:bg-rose-50">로그아웃</a>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main id="dashboardMain" class="px-4 lg:px-8 py-6 lg:py-8 transition-all duration-300">
+        <!-- Hero -->
+        <section class="rounded-[2rem] border border-slate-200 bg-white p-6 lg:p-8 shadow-soft animate-slide-up">
+          <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5">
+            <div>
+              <div class="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700">
+                <i class="fas fa-user-graduate"></i> 학생 대시보드
+              </div>
+              <h1 class="mt-4 text-3xl lg:text-4xl font-extrabold tracking-tight">
+                {{ student_id }} 님의 성적 분석 결과
+              </h1>
+              <p class="mt-3 text-sm lg:text-base text-slate-500">
+                수강 이력, GPA, 강점 분석, 추천 진로를 한눈에 확인할 수 있습니다.
+              </p>
+            </div>
+
+            <div class="flex flex-wrap gap-3">
+              <a href="/rag" class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                <i class="fas fa-comments mr-2 text-blue-600"></i>채팅으로 이동
+              </a>
+              <button id="careerChatShortcutHero" type="button" class="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-soft hover:opacity-90">
+                <i class="fas fa-briefcase mr-2"></i>진로채팅 열기
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Summary Cards -->
+        <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mt-6">
+          <div class="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-soft">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-sm text-slate-500">총 과목 수</div>
+                <div class="mt-2 text-4xl font-extrabold">{{ analysis.summary.total_courses or 0 }}</div>
+              </div>
+              <div class="h-14 w-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                <i class="fas fa-book-open"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-soft">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-sm text-slate-500">총 이수 학점</div>
+                <div class="mt-2 text-4xl font-extrabold">{{ analysis.summary.total_credits or 0 }}</div>
+              </div>
+              <div class="h-14 w-14 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center text-xl">
+                <i class="fas fa-layer-group"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-soft">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-sm text-slate-500">평점 GPA</div>
+                <div class="mt-2 text-4xl font-extrabold">
+                  {% if analysis.summary.gpa is not none %}{{ analysis.summary.gpa }}{% else %}-{% endif %}
+                </div>
+              </div>
+              <div class="h-14 w-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                <i class="fas fa-chart-line"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-soft">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-sm text-slate-500">학기 수</div>
+                <div class="mt-2 text-4xl font-extrabold">{{ analysis.summary.semester_count or 0 }}</div>
+              </div>
+              <div class="h-14 w-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+                <i class="fas fa-calendar-days"></i>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Strength / Career -->
+        <section class="grid grid-cols-1 2xl:grid-cols-[1.2fr_0.95fr] gap-6 mt-6">
+          <!-- Strengths -->
+          <div class="rounded-[2rem] border border-slate-200 bg-white p-6 lg:p-8 shadow-soft">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="h-12 w-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                <i class="fas fa-brain"></i>
+              </div>
+              <div>
+                <h2 class="text-2xl font-bold">강점 분석</h2>
+                <p class="text-sm text-slate-500">성적 및 수강 이력을 기반으로 추출한 핵심 강점입니다.</p>
+              </div>
+            </div>
+
+            {% if analysis.strengths and analysis.strengths|length > 0 %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {% for strength in analysis.strengths %}
+              <div class="rounded-[1.75rem] border border-slate-200 bg-slate-50 p-5">
+                <div class="flex items-start justify-between gap-3">
+                  <div>
+                    <div class="text-xs font-semibold text-blue-700">강점 {{ loop.index }}</div>
+                    <div class="mt-2 text-xl font-bold">{{ strength.domain }}</div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-xs text-slate-500">점수</div>
+                    <div class="text-2xl font-bold text-blue-700">{{ strength.score }}</div>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3 mt-4 text-center">
+                  <div class="rounded-2xl border border-slate-200 bg-white p-3">
+                    <div class="text-xs text-slate-500">학점</div>
+                    <div class="mt-1 font-bold">{{ strength.credit_sum }}</div>
+                  </div>
+                  <div class="rounded-2xl border border-slate-200 bg-white p-3">
+                    <div class="text-xs text-slate-500">과목 수</div>
+                    <div class="mt-1 font-bold">{{ strength.course_count }}</div>
+                  </div>
+                  <div class="rounded-2xl border border-slate-200 bg-white p-3">
+                    <div class="text-xs text-slate-500">평균</div>
+                    <div class="mt-1 font-bold">{{ strength.avg_score }}</div>
+                  </div>
+                </div>
+
+                <p class="mt-4 text-sm leading-7 text-slate-600">{{ strength.description }}</p>
+
+                {% if strength.top_subjects and strength.top_subjects|length > 0 %}
+                <div class="mt-4 flex flex-wrap gap-2">
+                  {% for subject in strength.top_subjects %}
+                  <span class="rounded-full bg-white border border-slate-200 px-3 py-1 text-xs text-slate-600">
+                    {{ subject }}
+                  </span>
+                  {% endfor %}
+                </div>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="rounded-[1.75rem] border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-slate-500">
+              강점 분석 데이터가 없습니다.
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Careers -->
+          <div class="rounded-[2rem] border border-slate-200 bg-white p-6 lg:p-8 shadow-soft">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="h-12 w-12 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center">
+                <i class="fas fa-compass"></i>
+              </div>
+              <div>
+                <h2 class="text-2xl font-bold">추천 진로</h2>
+                <p class="text-sm text-slate-500">카드를 누르면 오른쪽에서 자세한 설명이 열립니다.</p>
+              </div>
+            </div>
+
+            {% if analysis.career_recommendations and analysis.career_recommendations|length > 0 %}
+            <div class="space-y-4">
+              {% for career in analysis.career_recommendations %}
+              <button
+                type="button"
+                class="career-card w-full text-left rounded-[1.75rem] border border-slate-200 bg-slate-50 p-5 hover:border-blue-300 hover:bg-white transition"
+                data-title="{{ (career.career_name or career.career or '')|e }}"
+                data-description="{{ (career.description or career.reason or career.strength_summary or '설명이 없습니다.')|e }}"
+                data-skills="{{ (career.skills|join('||') if career.skills else '')|e }}"
+                data-actions="{{ (career.recommended_actions|join('||') if career.recommended_actions else '')|e }}"
+              >
+                <div class="flex items-start justify-between gap-4">
+                  <div>
+                    <div class="inline-flex rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-700">
+                      추천 {{ loop.index }}
+                    </div>
+                    <div class="mt-3 text-xl font-bold">{{ career.career_name or career.career }}</div>
+                    <p class="mt-2 text-sm leading-7 text-slate-600">
+                      {{ career.strength_summary or career.description or career.reason }}
+                    </p>
+                  </div>
+
+                  <span class="h-11 w-11 shrink-0 rounded-2xl border border-slate-200 bg-white flex items-center justify-center text-slate-500">
+                    <i class="fas fa-chevron-right"></i>
+                  </span>
+                </div>
+              </button>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="rounded-[1.75rem] border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-slate-500">
+              아직 추천 진로 결과가 없습니다.
+            </div>
+            {% endif %}
+          </div>
+        </section>
+
+        <!-- Category / Low Grades -->
+        <section class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
+          <div class="rounded-[2rem] border border-slate-200 bg-white p-6 lg:p-8 shadow-soft">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="h-12 w-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <i class="fas fa-table-cells-large"></i>
+              </div>
+              <div>
+                <h2 class="text-2xl font-bold">이수구분별 학점 요약</h2>
+                <p class="text-sm text-slate-500">카테고리 기준 학점 현황입니다.</p>
+              </div>
+            </div>
+
+            {% if analysis.category_credit_summary and analysis.category_credit_summary|length > 0 %}
+            <div class="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-slate-50">
+              <table class="min-w-full text-sm">
+                <thead class="bg-slate-100">
+                  <tr>
+                    <th class="px-5 py-4 text-left font-semibold">구분</th>
+                    <th class="px-5 py-4 text-left font-semibold">학점</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for category, credit in analysis.category_credit_summary.items() %}
+                  <tr class="border-t border-slate-200">
+                    <td class="px-5 py-4">{{ category }}</td>
+                    <td class="px-5 py-4 font-semibold">{{ credit }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+            <div class="rounded-[1.75rem] border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-slate-500">
+              이수구분 요약 데이터가 없습니다.
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="rounded-[2rem] border border-slate-200 bg-white p-6 lg:p-8 shadow-soft">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="h-12 w-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                <i class="fas fa-rotate-left"></i>
+              </div>
+              <div>
+                <h2 class="text-2xl font-bold">재수강 / 저성적 체크</h2>
+                <p class="text-sm text-slate-500">개선이 필요할 수 있는 과목 목록입니다.</p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4">
+              <div class="rounded-[1.75rem] border border-slate-200 bg-slate-50 p-5">
+                <div class="text-sm font-semibold mb-3">저성적 과목</div>
+                {% if analysis.low_grade_courses and analysis.low_grade_courses|length > 0 %}
+                <div class="space-y-3">
+                  {% for item in analysis.low_grade_courses[:4] %}
+                  <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                    <div class="flex items-start justify-between gap-4">
+                      <div>
+                        <div class="font-semibold">{{ item.과목명 }}</div>
+                        <div class="text-xs text-slate-500 mt-1">{{ item.학기키 }}</div>
+                      </div>
+                      <div class="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-600">
+                        {{ item.성적 }}
+                      </div>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-sm text-slate-500">저성적 과목 데이터가 없습니다.</div>
+                {% endif %}
+              </div>
+
+              <div class="rounded-[1.75rem] border border-slate-200 bg-slate-50 p-5">
+                <div class="text-sm font-semibold mb-3">재수강 후보</div>
+                {% if analysis.retake_candidates and analysis.retake_candidates|length > 0 %}
+                <div class="space-y-3">
+                  {% for item in analysis.retake_candidates[:4] %}
+                  <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                    <div class="flex items-start justify-between gap-4">
+                      <div>
+                        <div class="font-semibold">{{ item.과목명 }}</div>
+                        <div class="text-xs text-slate-500 mt-1">{{ item.학기키 }}</div>
+                      </div>
+                      <div class="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                        {{ item.성적 }}
+                      </div>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-sm text-slate-500">재수강 후보 데이터가 없습니다.</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Semesters -->
+        <section class="mt-6 rounded-[2rem] border border-slate-200 bg-white p-6 lg:p-8 shadow-soft overflow-hidden">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="h-12 w-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center">
+              <i class="fas fa-list-check"></i>
+            </div>
+            <div>
+              <h2 class="text-2xl font-bold">학기별 상세 성적</h2>
+              <p class="text-sm text-slate-500">학기 단위 수강 과목과 학점, 성적을 확인할 수 있습니다.</p>
+            </div>
+          </div>
+
+          {% if analysis.semesters and analysis.semesters|length > 0 %}
+          <div class="space-y-5">
+            {% for sem in analysis.semesters %}
+            <div class="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-slate-50">
+              <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 border-b border-slate-200 px-5 py-4">
+                <div>
+                  <div class="text-lg font-bold">{{ sem.semester }}</div>
+                  <div class="text-sm text-slate-500 mt-1">{{ sem.course_count }}과목 · {{ sem.credit_sum }}학점</div>
+                </div>
+                <div class="rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-blue-700 border border-slate-200">
+                  GPA {% if sem.gpa is not none %}{{ sem.gpa }}{% else %}-{% endif %}
+                </div>
+              </div>
+
+              <div class="overflow-x-auto thin-scrollbar">
+                <table class="min-w-full text-sm">
+                  <thead class="bg-white">
+                    <tr>
+                      <th class="px-5 py-4 text-left font-semibold">과목명</th>
+                      <th class="px-5 py-4 text-left font-semibold">학점</th>
+                      <th class="px-5 py-4 text-left font-semibold">성적</th>
+                      <th class="px-5 py-4 text-left font-semibold">이수구분</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for course in sem.courses %}
+                    <tr class="border-t border-slate-200 bg-slate-50/60 hover:bg-white">
+                      <td class="px-5 py-4">{{ course.과목명 }}</td>
+                      <td class="px-5 py-4">{{ course.학점 }}</td>
+                      <td class="px-5 py-4">{{ course.성적 }}</td>
+                      <td class="px-5 py-4">{{ course.이수구분 }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="rounded-[1.75rem] border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-slate-500">
+            학기별 성적 데이터가 없습니다.
+          </div>
+          {% endif %}
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Mobile Sidebar -->
+  <div id="mobileSidebarBackdrop" class="hidden fixed inset-0 z-40 bg-slate-900/30 lg:hidden"></div>
+  <aside id="mobileSidebar" class="fixed inset-y-0 left-0 z-50 w-72 -translate-x-full border-r border-slate-200 bg-white transition-transform duration-300 lg:hidden">
+    <div class="flex h-full flex-col">
+      <div class="flex items-center justify-between border-b border-slate-200 px-5 py-5">
+        <div>
+          <div class="font-extrabold">한림대학교 AI 튜터</div>
+          <div class="text-xs text-slate-500">{{ student_id }}</div>
+        </div>
+        <button id="mobileMenuClose" class="h-10 w-10 rounded-xl border border-slate-200 bg-white">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="p-4 space-y-2">
+        <a href="/dashboard" class="flex items-center gap-3 rounded-2xl bg-slate-900 px-4 py-4 text-white">
+          <i class="fas fa-chart-pie"></i><span>Dashboard</span>
+        </a>
+        <a href="/rag" class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-slate-800">
+          <i class="fas fa-comments text-blue-600"></i><span>채팅</span>
+        </a>
+        <button id="careerChatShortcutMobile" type="button" class="w-full flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left text-slate-800">
+          <i class="fas fa-briefcase text-violet-600"></i><span>진로채팅</span>
+        </button>
+      </div>
+
+      <div class="px-4">
+        <div class="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+          <div class="text-sm font-semibold">대화기록</div>
+          <div class="mt-3 space-y-2 text-sm text-slate-600">
+            <div class="rounded-2xl border border-slate-200 bg-white px-3 py-3">백엔드 과목 추천</div>
+            <div class="rounded-2xl border border-slate-200 bg-white px-3 py-3">보안 직무 추천</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-auto p-4">
+        <a href="/logout" class="flex items-center justify-center gap-2 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700">
+          <i class="fas fa-right-from-bracket"></i>로그아웃
+        </a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Career Detail Panel -->
+  <div id="careerDetailBackdrop" class="hidden fixed inset-0 z-40 bg-slate-900/25"></div>
+  <aside id="careerDetailPanel" class="fixed top-0 right-0 z-50 h-screen w-full max-w-[460px] translate-x-full border-l border-slate-200 bg-white shadow-panel transition-transform duration-300">
+    <div class="flex h-full flex-col">
+      <div class="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5">
+        <div>
+          <div class="text-xs font-semibold tracking-[0.24em] text-slate-400 uppercase">Career Detail</div>
+          <h2 id="careerDetailTitle" class="mt-2 text-2xl font-extrabold">진로 상세</h2>
+        </div>
+        <button id="careerDetailClose" type="button" class="h-11 w-11 rounded-2xl border border-slate-200 bg-slate-50 text-slate-700">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto thin-scrollbar px-6 py-5 space-y-5 bg-slate-50">
+        <section class="rounded-[1.75rem] border border-slate-200 bg-white p-5">
+          <h3 class="font-bold">설명</h3>
+          <p id="careerDetailDescription" class="mt-3 text-sm leading-8 text-slate-600">설명이 없습니다.</p>
+        </section>
+
+        <section class="rounded-[1.75rem] border border-slate-200 bg-white p-5">
+          <h3 class="font-bold">핵심 역량</h3>
+          <ul id="careerDetailSkills" class="mt-3 space-y-2 text-sm text-slate-600"></ul>
+        </section>
+
+        <section class="rounded-[1.75rem] border border-slate-200 bg-white p-5">
+          <h3 class="font-bold">추천 액션</h3>
+          <ul id="careerDetailActions" class="mt-3 space-y-2 text-sm text-slate-600"></ul>
+        </section>
+      </div>
+
+      <div class="border-t border-slate-200 bg-white p-5">
+        <button id="continueCareerConsulting" type="button" class="w-full rounded-2xl bg-slate-900 px-4 py-4 text-sm font-semibold text-white shadow-soft hover:opacity-90">
+          <i class="fas fa-comments mr-2"></i>이 진로로 상담 이어가기
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Career Chat Panel -->
+  <div id="careerChatBackdrop" class="hidden fixed inset-0 z-40 bg-slate-900/25"></div>
+  <aside id="careerChatPanel" class="fixed top-0 right-0 z-50 h-screen w-full max-w-[430px] translate-x-full border-l border-slate-200 bg-white shadow-panel transition-transform duration-300">
+    <div class="flex h-full flex-col">
+      <div class="border-b border-slate-200 bg-white px-5 py-4">
+        <div class="flex items-start justify-between gap-4">
+          <div class="flex items-start gap-3">
+            <div class="h-12 w-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+              <i class="fas fa-robot"></i>
+            </div>
+            <div>
+              <div class="text-lg font-bold">진로/과목 추천 챗봇</div>
+              <div class="text-xs text-slate-500">대시보드 전용 추천 채팅</div>
+            </div>
+          </div>
+          <button id="careerChatClose" type="button" class="h-10 w-10 rounded-2xl border border-slate-200 bg-slate-50 text-slate-700">
+            <i class="fas fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="mt-4 flex flex-wrap gap-2">
+          <button type="button" class="quick-question rounded-full bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700" data-question="백엔드 과목 추천">백엔드 과목 추천</button>
+          <button type="button" class="quick-question rounded-full bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-700" data-question="데이터 분석 과목 추천">데이터 분석 과목 추천</button>
+          <button type="button" class="quick-question rounded-full bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700" data-question="부족한 부분 보완">부족한 부분 보완</button>
+        </div>
+      </div>
+
+      <div id="careerChatMessages" class="flex-1 overflow-y-auto thin-scrollbar bg-slate-50 px-4 py-4 space-y-4">
+        <div class="flex items-start gap-3">
+          <div class="h-10 w-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+            <i class="fas fa-robot"></i>
+          </div>
+          <div class="max-w-[85%] rounded-3xl rounded-tl-md border border-slate-200 bg-white px-4 py-4 text-sm leading-8 text-slate-700 shadow-soft">
+            현재 이수 흐름과 성적을 기준으로 진로 방향, 보완 과목, 추천 액션을 같이 정리해드릴게요. 원하는 직무나 고민을 입력해보세요.
+          </div>
+        </div>
+      </div>
+
+      <div class="border-t border-slate-200 bg-white p-4">
+        <form id="careerChatForm" class="flex items-end gap-3">
+          <div class="flex-1 rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-3">
+            <textarea id="careerChatInput" rows="1" placeholder="진로 목표나 고민을 입력하세요" class="w-full resize-none bg-transparent text-sm outline-none placeholder:text-slate-400"></textarea>
+          </div>
+          <button id="careerChatSend" type="submit" class="h-12 w-12 rounded-2xl bg-slate-900 text-white shadow-soft hover:opacity-90 disabled:opacity-50">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+  </aside>
+<script>
+  const mobileMenuOpen = document.getElementById('mobileMenuOpen');
+  const mobileMenuClose = document.getElementById('mobileMenuClose');
+  const mobileSidebar = document.getElementById('mobileSidebar');
+  const mobileSidebarBackdrop = document.getElementById('mobileSidebarBackdrop');
+
+  const myMenuButton = document.getElementById('myMenuButton');
+  const myMenu = document.getElementById('myMenu');
+
+  const careerDetailPanel = document.getElementById('careerDetailPanel');
+  const careerDetailBackdrop = document.getElementById('careerDetailBackdrop');
+  const careerDetailClose = document.getElementById('careerDetailClose');
+  const continueCareerConsulting = document.getElementById('continueCareerConsulting');
+
+  const careerChatPanel = document.getElementById('careerChatPanel');
+  const careerChatBackdrop = document.getElementById('careerChatBackdrop');
+  const careerChatClose = document.getElementById('careerChatClose');
+  const careerChatMessages = document.getElementById('careerChatMessages');
+  const careerChatForm = document.getElementById('careerChatForm');
+  const careerChatInput = document.getElementById('careerChatInput');
+  const careerChatSend = document.getElementById('careerChatSend');
+
+  const chatOpenButtons = [
+    document.getElementById('careerChatShortcutHero'),
+    document.getElementById('careerChatShortcutMobile')
+  ].filter(Boolean);
+
+  const quickButtons = Array.from(document.querySelectorAll('.quick-question'));
+  const careerCards = Array.from(document.querySelectorAll('.career-card'));
+
+  const RECOMMEND_STREAM_URL = '/api/chat/recommend-courses/stream';
+
+  let selectedCareerTitle = '';
+  let isCareerChatStreaming = false;
+
+  function openMobileSidebar() {
+    mobileSidebar.classList.remove('-translate-x-full');
+    mobileSidebarBackdrop.classList.remove('hidden');
+  }
+
+  function closeMobileSidebar() {
+    mobileSidebar.classList.add('-translate-x-full');
+    mobileSidebarBackdrop.classList.add('hidden');
+  }
+
+  function toggleMyMenu() {
+    myMenu.classList.toggle('hidden');
+  }
+
+  function closeMyMenu() {
+    myMenu.classList.add('hidden');
+  }
+
+  function openCareerDetail(data) {
+    selectedCareerTitle = data.title || '';
+
+    document.getElementById('careerDetailTitle').innerText = data.title || '진로 상세';
+    document.getElementById('careerDetailDescription').innerText = data.description || '설명이 없습니다.';
+
+    fillList('careerDetailSkills', data.skills, '표시할 역량 정보가 없습니다.');
+    fillList('careerDetailActions', data.actions, '표시할 액션 정보가 없습니다.');
+
+    careerDetailPanel.classList.remove('translate-x-full');
+    careerDetailBackdrop.classList.remove('hidden');
+  }
+
+  function closeCareerDetail() {
+    careerDetailPanel.classList.add('translate-x-full');
+    careerDetailBackdrop.classList.add('hidden');
+  }
+
+  function openCareerChat() {
+    careerChatPanel.classList.remove('translate-x-full');
+    careerChatBackdrop.classList.remove('hidden');
+  }
+
+  function closeCareerChat() {
+    careerChatPanel.classList.add('translate-x-full');
+    careerChatBackdrop.classList.add('hidden');
+  }
+
+  function fillList(containerId, items, emptyText) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const values = Array.isArray(items) ? items.filter(Boolean) : [];
+    container.innerHTML = values.length
+      ? values.map(item => `<li class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">${escapeHtml(item)}</li>`).join('')
+      : `<li class="text-slate-500">${escapeHtml(emptyText)}</li>`;
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function nl2br(value) {
+    return escapeHtml(value).replace(/\n/g, '<br>');
+  }
+
+  function parsePackedList(value) {
+    return String(value || '')
+      .split('||')
+      .map(v => v.trim())
+      .filter(Boolean);
+  }
+
+  function appendUserMessage(text) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'flex justify-end';
+
+    wrapper.innerHTML = `
+      <div class="max-w-[85%] rounded-3xl rounded-br-md bg-slate-900 px-4 py-4 text-sm leading-8 text-white shadow-soft">
+        ${escapeHtml(text)}
+      </div>
+    `;
+
+    careerChatMessages.appendChild(wrapper);
+    careerChatMessages.scrollTop = careerChatMessages.scrollHeight;
+  }
+
+  function appendBotMessage(html) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'flex items-start gap-3';
+
+    wrapper.innerHTML = `
+      <div class="h-10 w-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+        <i class="fas fa-robot"></i>
+      </div>
+      <div class="max-w-[85%] rounded-3xl rounded-tl-md border border-slate-200 bg-white px-4 py-4 text-sm leading-8 text-slate-700 shadow-soft">
+        ${html}
+      </div>
+    `;
+
+    careerChatMessages.appendChild(wrapper);
+    careerChatMessages.scrollTop = careerChatMessages.scrollHeight;
+  }
+
+  function appendLoadingMessage() {
+    const id = `loading-${Date.now()}`;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'flex items-start gap-3';
+    wrapper.id = id;
+
+    wrapper.innerHTML = `
+      <div class="h-10 w-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+        <i class="fas fa-robot"></i>
+      </div>
+      <div class="max-w-[85%] rounded-3xl rounded-tl-md border border-slate-200 bg-white px-4 py-4 text-sm text-slate-500 shadow-soft">
+        답변을 생성하고 있습니다...
+      </div>
+    `;
+
+    careerChatMessages.appendChild(wrapper);
+    careerChatMessages.scrollTop = careerChatMessages.scrollHeight;
+    return id;
+  }
+
+  function removeMessageById(id) {
+    const node = document.getElementById(id);
+    if (node) node.remove();
+  }
+
+  function renderRecommendationResult(result) {
+    if (!result || typeof result !== 'object') {
+      return '추천 결과가 없습니다.';
+    }
+
+    const answer = result.answer || result.summary || '';
+    const courses = Array.isArray(result.recommended_courses)
+      ? result.recommended_courses
+      : (Array.isArray(result.recommendations) ? result.recommendations : []);
+
+    let html = '';
+
+    if (answer) {
+      html += `<div class="mb-4 text-sm leading-7 text-slate-700">${nl2br(answer)}</div>`;
+    }
+
+    if (courses.length) {
+      html += `<div class="space-y-3">`;
+
+      courses
+        .sort((a, b) => {
+          const ap = Number(a?.priority ?? 999);
+          const bp = Number(b?.priority ?? 999);
+          return ap - bp;
+        })
+        .forEach((item, index) => {
+          const courseName = item.course_name || item.title || `추천 과목 ${index + 1}`;
+          const reason = item.reason || '';
+          const priority = item.priority != null ? `우선순위 ${item.priority}` : '';
+
+          html += `
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+              <div class="flex items-center justify-between gap-3">
+                <div class="font-semibold text-slate-900">${escapeHtml(courseName)}</div>
+                ${priority ? `<span class="shrink-0 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">${escapeHtml(priority)}</span>` : ''}
+              </div>
+              ${reason ? `<div class="mt-2 text-sm leading-7 text-slate-600">${nl2br(reason)}</div>` : ''}
+            </div>
+          `;
+        });
+
+      html += `</div>`;
+    } else {
+      html += `<div class="text-sm text-slate-500">추천 결과가 없습니다.</div>`;
+    }
+
+    return html;
+  }
+
+  function createStreamingBotMessage() {
+    const id = `stream-${Date.now()}`;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'flex items-start gap-3';
+    wrapper.id = id;
+
+    wrapper.innerHTML = `
+      <div class="h-10 w-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+        <i class="fas fa-robot"></i>
+      </div>
+      <div class="max-w-[85%] rounded-3xl rounded-tl-md border border-slate-200 bg-white px-4 py-4 text-sm leading-8 text-slate-700 shadow-soft">
+        <div class="stream-answer text-sm leading-7 text-slate-700 whitespace-pre-wrap"></div>
+        <div class="stream-courses mt-4"></div>
+      </div>
+    `;
+
+    careerChatMessages.appendChild(wrapper);
+    careerChatMessages.scrollTop = careerChatMessages.scrollHeight;
+    return id;
+  }
+
+  function getStreamingMessageParts(messageId) {
+    const root = document.getElementById(messageId);
+    if (!root) return {};
+
+    return {
+      root,
+      answerEl: root.querySelector('.stream-answer'),
+      coursesEl: root.querySelector('.stream-courses')
+    };
+  }
+
+  function setStreamingAnswer(messageId, text) {
+    const { answerEl } = getStreamingMessageParts(messageId);
+    if (!answerEl) return;
+
+    const value = String(text || '');
+    answerEl.dataset.raw = value;
+    answerEl.innerHTML = nl2br(value);
+    careerChatMessages.scrollTop = careerChatMessages.scrollHeight;
+  }
+
+  function appendStreamingDelta(messageId, delta) {
+    const { answerEl } = getStreamingMessageParts(messageId);
+    if (!answerEl) return;
+
+    const current = answerEl.dataset.raw || '';
+    const next = current + String(delta || '');
+
+    answerEl.dataset.raw = next;
+    answerEl.innerHTML = nl2br(next);
+    careerChatMessages.scrollTop = careerChatMessages.scrollHeight;
+  }
+
+  function setStreamingCourses(messageId, result) {
+    const { coursesEl } = getStreamingMessageParts(messageId);
+    if (!coursesEl) return;
+
+    const courses = Array.isArray(result?.recommended_courses)
+      ? result.recommended_courses
+      : (Array.isArray(result?.recommendations) ? result.recommendations : []);
+
+    if (!courses.length) {
+      coursesEl.innerHTML = `<div class="text-sm text-slate-500">추천 결과가 없습니다.</div>`;
+      careerChatMessages.scrollTop = careerChatMessages.scrollHeight;
+      return;
+    }
+
+    let html = `<div class="space-y-3">`;
+
+    courses
+      .sort((a, b) => {
+        const ap = Number(a?.priority ?? 999);
+        const bp = Number(b?.priority ?? 999);
+        return ap - bp;
+      })
+      .forEach((item, index) => {
+        const courseName = item.course_name || item.title || `추천 과목 ${index + 1}`;
+        const reason = item.reason || '';
+        const priority = item.priority != null ? `우선순위 ${item.priority}` : '';
+
+        html += `
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+            <div class="flex items-center justify-between gap-3">
+              <div class="font-semibold text-slate-900">${escapeHtml(courseName)}</div>
+              ${priority ? `<span class="shrink-0 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">${escapeHtml(priority)}</span>` : ''}
+            </div>
+            ${reason ? `<div class="mt-2 text-sm leading-7 text-slate-600">${nl2br(reason)}</div>` : ''}
+          </div>
+        `;
+      });
+
+    html += `</div>`;
+    coursesEl.innerHTML = html;
+    careerChatMessages.scrollTop = careerChatMessages.scrollHeight;
+  }
+
+  function setStreamingError(messageId, message) {
+    const { root } = getStreamingMessageParts(messageId);
+    if (!root) return;
+
+    root.querySelector('.stream-answer').innerHTML = `
+      <span class="text-rose-600">${escapeHtml(message || '오류가 발생했습니다.')}</span>
+    `;
+    root.querySelector('.stream-courses').innerHTML = '';
+    careerChatMessages.scrollTop = careerChatMessages.scrollHeight;
+  }
+
+  function parseSSEBlock(block) {
+    const lines = String(block || '').split('\n');
+    let eventName = 'message';
+    const dataLines = [];
+
+    for (const line of lines) {
+      if (!line) continue;
+      if (line.startsWith(':')) continue;
+
+      if (line.startsWith('event:')) {
+        eventName = line.slice(6).trim();
+        continue;
+      }
+
+      if (line.startsWith('data:')) {
+        dataLines.push(line.slice(5).trim());
+      }
+    }
+
+    return {
+      event: eventName,
+      data: dataLines.join('\n')
+    };
+  }
+
+  async function readStreamResponse(response, handlers) {
+    if (!response.body) {
+      throw new Error('스트리밍 응답 본문이 없습니다.');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+
+      const chunks = buffer.split('\n\n');
+      buffer = chunks.pop() || '';
+
+      for (const chunk of chunks) {
+        const parsed = parseSSEBlock(chunk);
+        if (!parsed.data) continue;
+
+        let payload;
+        try {
+          payload = JSON.parse(parsed.data);
+        } catch {
+          continue;
+        }
+
+        if (parsed.event === 'meta' && handlers.onMeta) {
+          handlers.onMeta(payload);
+        } else if (parsed.event === 'delta' && handlers.onDelta) {
+          handlers.onDelta(payload);
+        } else if (parsed.event === 'courses' && handlers.onCourses) {
+          handlers.onCourses(payload);
+        } else if (parsed.event === 'done' && handlers.onDone) {
+          handlers.onDone(payload);
+        } else if (parsed.event === 'error' && handlers.onError) {
+          handlers.onError(payload);
+        }
+      }
+    }
+  }
+
+  async function sendCareerQuestion(question) {
+    const trimmed = (question || '').trim();
+    if (!trimmed) return;
+    if (isCareerChatStreaming) return;
+
+    isCareerChatStreaming = true;
+    openCareerChat();
+    appendUserMessage(trimmed);
+
+    careerChatInput.value = '';
+    careerChatInput.style.height = 'auto';
+    careerChatSend.disabled = true;
+
+    const streamingMessageId = createStreamingBotMessage();
+    let finalAnswer = '';
+    let streamEnded = false;
+
+    try {
+      const response = await fetch(RECOMMEND_STREAM_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: trimmed })
+      });
+
+      if (!response.ok) {
+        let errorText = '과목 추천 요청 중 오류가 발생했습니다.';
+        try {
+          const text = await response.text();
+          if (text) errorText = text;
+        } catch {}
+        setStreamingError(streamingMessageId, errorText);
+        return;
+      }
+
+      await readStreamResponse(response, {
+        onMeta() {
+          // 필요 시 sid/meta 사용
+        },
+        onDelta(payload) {
+          const delta = String(payload?.delta || '');
+          if (!delta) return;
+          finalAnswer += delta;
+          appendStreamingDelta(streamingMessageId, delta);
+        },
+        onCourses(payload) {
+          const answer = String(payload?.answer || '').trim();
+
+          if (answer) {
+            finalAnswer = answer;
+            setStreamingAnswer(streamingMessageId, answer);
+          }
+
+          setStreamingCourses(streamingMessageId, payload);
+        },
+        onDone() {
+          streamEnded = true;
+        },
+        onError(payload) {
+          const message = payload?.error || '스트리밍 중 오류가 발생했습니다.';
+          setStreamingError(streamingMessageId, message);
+          streamEnded = true;
+        }
+      });
+
+      if (!streamEnded && !finalAnswer) {
+        setStreamingError(streamingMessageId, '응답이 비어 있습니다.');
+      }
+    } catch (error) {
+      setStreamingError(streamingMessageId, '네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      isCareerChatStreaming = false;
+      careerChatSend.disabled = false;
+      careerChatInput.focus();
+    }
+  }
+
+  mobileMenuOpen?.addEventListener('click', openMobileSidebar);
+  mobileMenuClose?.addEventListener('click', closeMobileSidebar);
+  mobileSidebarBackdrop?.addEventListener('click', closeMobileSidebar);
+
+  myMenuButton?.addEventListener('click', function (e) {
+    e.stopPropagation();
+    toggleMyMenu();
+  });
+
+  document.addEventListener('click', function (e) {
+    if (myMenu && myMenuButton && !myMenu.contains(e.target) && !myMenuButton.contains(e.target)) {
+      closeMyMenu();
+    }
+  });
+
+  careerCards.forEach((card) => {
+    card.addEventListener('click', function () {
+      const title = this.dataset.title || '';
+      const description = this.dataset.description || '';
+      const skills = parsePackedList(this.dataset.skills);
+      const actions = parsePackedList(this.dataset.actions);
+
+      openCareerDetail({
+        title,
+        description,
+        skills,
+        actions
+      });
+    });
+  });
+
+  careerDetailClose?.addEventListener('click', closeCareerDetail);
+  careerDetailBackdrop?.addEventListener('click', closeCareerDetail);
+
+  continueCareerConsulting?.addEventListener('click', function () {
+    const title = (selectedCareerTitle || '').trim();
+
+    closeCareerDetail();
+    openCareerChat();
+
+    if (!title) {
+      careerChatInput.focus();
+      return;
+    }
+
+    sendCareerQuestion(`${title} 방향으로 상담 이어가기`);
+  });
+
+  chatOpenButtons.forEach((button) => {
+    button.addEventListener('click', function () {
+      closeMobileSidebar();
+      openCareerChat();
+    });
+  });
+
+  careerChatClose?.addEventListener('click', closeCareerChat);
+  careerChatBackdrop?.addEventListener('click', closeCareerChat);
+
+  quickButtons.forEach((button) => {
+    button.addEventListener('click', function () {
+      const question = this.dataset.question || '';
+      sendCareerQuestion(question);
+    });
+  });
+
+  careerChatForm?.addEventListener('submit', function (e) {
+    e.preventDefault();
+    sendCareerQuestion(careerChatInput.value);
+  });
+
+  careerChatInput?.addEventListener('input', function () {
+    this.style.height = 'auto';
+    this.style.height = `${Math.min(this.scrollHeight, 160)}px`;
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,2058 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Dashboard - Chat Embedded</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          boxShadow: {
+            soft: '0 10px 30px rgba(15, 23, 42, 0.08)',
+            panel: '0 18px 40px rgba(15, 23, 42, 0.12)'
+          }
+        }
+      }
+    }
+  </script>
+<style>
+  body { font-family: Pretendard, 'Noto Sans KR', system-ui, sans-serif; }
+
+  .thin-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+  .thin-scrollbar::-webkit-scrollbar-thumb { background: rgba(148,163,184,.45); border-radius: 999px; }
+  .thin-scrollbar::-webkit-scrollbar-track { background: transparent; }
+
+  .md {
+    white-space: normal;
+    word-break: break-word;
+    color: rgb(51 65 85);
+    line-height: 1.7;
+  }
+
+  .md p { margin: 0.75rem 0; }
+  .md ul, .md ol { margin: 0.75rem 0 0.75rem 1.25rem; }
+  .md li { margin: 0.35rem 0; }
+  .md a { text-decoration: underline; }
+
+  .md :not(pre) > code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+    font-size: 0.9em;
+    padding: 0.15rem 0.35rem;
+    border-radius: 0.5rem;
+    background: rgb(241 245 249);
+    color: rgb(15 23 42);
+  }
+
+  .md pre {
+    margin: 0.9rem 0;
+    overflow: auto;
+    border-radius: 1rem;
+    background: rgb(15 23 42);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .md pre code {
+    display: block;
+    padding: 0.95rem 1rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: rgb(226 232 240);
+    background: transparent !important;
+  }
+
+  /* table */
+  .md table {
+    width: 100%;
+    margin: 1rem 0;
+    border-collapse: collapse;
+    border-spacing: 0;
+    border-radius: 1rem;
+    border: 1px solid rgb(226 232 240);
+    background: white;
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .md thead { background: rgb(248 250 252); }
+
+  .md th,
+  .md td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid rgb(226 232 240);
+    text-align: left;
+    vertical-align: top;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .md th {
+    font-weight: 700;
+    color: rgb(15 23 42);
+  }
+
+  .md td { color: rgb(51 65 85); }
+  .md tbody tr:hover { background: rgb(248 250 252); }
+  .md tbody tr:last-child td { border-bottom: none; }
+
+  /* image */
+  .md img {
+    display: block;
+    width: 100%;
+    max-width: 720px;
+    aspect-ratio: 16 / 9;
+    height: auto;
+    object-fit: cover;
+    margin: 1rem auto;
+    border-radius: 1rem;
+    background: rgb(248 250 252);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  }
+
+  /* 링크 안에 들어간 이미지 흔들림 방지 */
+  .md a:has(img) {
+    display: inline-block;
+    text-decoration: none;
+    max-width: 100%;
+  }
+
+  /* figure / caption 대응 */
+  .md figure {
+    margin: 1.25rem 0;
+  }
+
+  .md figure img {
+    margin: 0 auto;
+  }
+
+  .md figcaption {
+    margin-top: 0.55rem;
+    text-align: center;
+    font-size: 0.88rem;
+    color: rgb(100 116 139);
+  }
+
+  /* 이미지가 문단 안에서 이상하게 붙는 경우 정리 */
+  .md p > img:only-child {
+    margin: 1rem auto;
+  }
+
+  /* 좁은 화면 대응 */
+  @media (max-width: 640px) {
+    .md img {
+      border-radius: 0.85rem;
+      margin: 0.85rem auto;
+    }
+  }
+
+  .agent-panel-open #agentLogPanel { transform: translateX(0); }
+  .agent-panel-open #agentLogBackdrop { opacity: 1; pointer-events: auto; }
+</style>
+</head>
+
+<body class="bg-slate-100 text-slate-900">
+  <div id="agentLogBackdrop"
+       class="pointer-events-none fixed inset-0 z-40 bg-slate-900/25 opacity-0 transition lg:left-72"
+       onclick="closeAgentLogPanel()"></div>
+
+  <aside id="agentLogPanel"
+         class="fixed right-0 top-0 z-50 h-full w-full max-w-[460px] translate-x-full border-l border-slate-200 bg-white shadow-panel transition-transform duration-300">
+    <div class="flex h-full flex-col">
+      <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+        <div>
+          <div class="text-lg font-bold text-slate-900">생각</div>
+          <div class="mt-1 text-xs text-slate-500">에이전트 추론 로그와 중간 결과</div>
+        </div>
+        <button type="button"
+                onclick="closeAgentLogPanel()"
+                class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">
+          <i class="fas fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="border-b border-slate-200 px-5 py-3">
+        <div class="rounded-2xl bg-slate-50 px-4 py-3">
+          <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">상태</div>
+          <div id="agentLogStatus" class="mt-2 text-sm font-semibold text-slate-800">에이전트 로그 대기 중</div>
+        </div>
+      </div>
+
+      <div id="agentLogBody" class="thin-scrollbar flex-1 overflow-y-auto px-5 py-4">
+        <div class="rounded-2xl border border-dashed border-slate-300 px-4 py-6 text-sm leading-7 text-slate-500">
+          에이전트 모드로 질문하면 이 패널에 생각 과정 요약, 단계 로그, 최종 중간 결과가 표시됩니다.
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="min-h-screen lg:flex h-screen overflow-hidden">
+    <aside class="hidden lg:flex w-72 shrink-0 flex-col border-r border-slate-200 bg-white min-h-screen">
+      <div class="px-5 py-6 border-b border-slate-200">
+        <div class="flex items-center gap-3">
+          <div class="h-12 w-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-soft">
+            <i class="fas fa-graduation-cap"></i>
+          </div>
+          <div>
+            <div class="text-lg font-extrabold tracking-tight">한림대학교 AI 튜터</div>
+            <div class="text-xs text-slate-500">Dashboard & Career Guide</div>
+          </div>
+        </div>
+        <div class="mt-5 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4">
+          <div class="text-xs text-slate-500">현재 사용자</div>
+          <div class="mt-1 text-lg font-bold">{{ student_id }}</div>
+          <div class="mt-1 text-xs text-slate-500">대시보드 분석 및 진로채팅 사용 가능</div>
+        </div>
+      </div>
+
+      <div class="px-4 py-6 flex-1 flex flex-col">
+        <div class="px-2 text-xs font-semibold tracking-[0.24em] text-slate-400 uppercase">Menu</div>
+        <nav class="mt-4 space-y-2">
+          <a href="/dashboard" class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-slate-900 hover:bg-slate-50">
+            <span class="h-11 w-11 rounded-xl bg-slate-100 flex items-center justify-center"><i class="fas fa-chart-pie"></i></span>
+            <span>
+              <span class="block text-sm font-semibold">Dashboard</span>
+              <span class="block text-xs text-slate-500">성적 분석 결과 보기</span>
+            </span>
+          </a>
+          <a href="/rag" class="flex items-center gap-3 rounded-2xl bg-slate-900 px-4 py-4 text-white shadow-soft">
+            <span class="h-11 w-11 rounded-xl bg-white/10 flex items-center justify-center"><i class="fas fa-comments"></i></span>
+            <span>
+              <span class="block text-sm font-semibold">채팅</span>
+              <span class="block text-xs text-slate-300">일반 채팅 / RAG</span>
+            </span>
+          </a>
+        </nav>
+
+        <div class="mt-auto pt-6">
+          <a href="/logout" class="flex items-center justify-center gap-2 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-200">
+            <i class="fas fa-right-from-bracket"></i>로그아웃
+          </a>
+        </div>
+      </div>
+    </aside>
+
+    <div class="flex-1 min-w-0 flex flex-col min-h-0 h-screen overflow-hidden">
+      <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
+        <div class="flex items-center justify-between gap-3 px-4 lg:px-8 py-4">
+          <div class="flex items-center gap-3 lg:gap-6 min-w-0">
+            <button id="mobileMenuOpen" type="button" class="lg:hidden h-10 w-10 rounded-xl border border-slate-200 bg-white text-slate-700">
+              <i class="fas fa-bars"></i>
+            </button>
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="h-11 w-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                <i class="fas fa-graduation-cap"></i>
+              </div>
+              <div class="min-w-0">
+                <div class="font-extrabold truncate">한림대학교 AI 서비스</div>
+                <div class="text-xs text-slate-500">Chat</div>
+              </div>
+            </div>
+            <nav class="hidden md:flex items-center gap-2">
+              <a href="/rag" class="rounded-xl bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700">채팅</a>
+              <a href="/dashboard" class="rounded-xl px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">Dashboard</a>
+            </nav>
+          </div>
+
+          <div class="relative">
+            <button id="myMenuButton" type="button" class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 shadow-soft">
+              <span class="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600">MY</span>
+              <span class="hidden sm:block text-right">
+                <span class="block text-sm font-semibold">{{ student_id }}</span>
+                <span class="block text-xs text-slate-500">내 메뉴</span>
+              </span>
+            </button>
+            <div id="myMenu" class="hidden absolute right-0 mt-2 w-52 rounded-2xl border border-slate-200 bg-white p-2 shadow-panel">
+              {% if can_access_db %}
+              <a href="/rag/documents" class="block rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-100">DB 접속</a>
+              {% endif %}
+              <a href="/logout" class="block rounded-xl px-3 py-2 text-sm text-rose-600 hover:bg-rose-50">로그아웃</a>
+            </div>
+          </div>
+        </div>
+      </header>
+
+<main id="dashboardMain" class="flex-1 min-h-0 p-0">
+  <section class="flex h-full min-h-0 flex-col bg-white">
+    <div class="grid flex-1 min-h-0 grid-cols-1 lg:grid-cols-[320px_minmax(0,1fr)] gap-0">
+      <aside class="hidden lg:flex min-h-0 flex-col border-r border-slate-200 bg-slate-50 overflow-hidden">
+        <div class="border-b border-slate-200 p-4">
+          <button id="newChatBtn" type="button" class="w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-soft hover:opacity-90">
+            <i class="fas fa-plus mr-2"></i>새 대화 시작
+          </button>
+        </div>
+        <div class="px-4 pt-4 pb-2 flex items-center justify-between gap-2">
+          <div class="text-xs font-semibold tracking-[0.24em] text-slate-400 uppercase">History</div>
+          <button id="clearHistoryBtn" type="button" class="text-xs font-semibold text-slate-400 hover:text-rose-500">전체 삭제</button>
+        </div>
+        <div class="px-4 pb-3">
+          <div class="relative">
+            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+            <input id="historySearch" type="text" placeholder="대화 검색" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-blue-300" />
+          </div>
+        </div>
+        <div id="conversationList" class="thin-scrollbar flex-1 min-h-0 overflow-y-auto px-4 pb-4 space-y-2">
+          <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">불러오는 중...</div>
+        </div>
+      </aside>
+
+      <section class="flex min-h-0 flex-1 flex-col bg-slate-50 overflow-hidden">
+        <div class="border-b border-slate-200 bg-white p-4">
+          <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div id="chatTitle" class="text-sm font-semibold text-slate-900">새 대화</div>
+                <div id="chatMeta" class="mt-1 text-xs text-slate-500">일반 질문과 내부 DB 기반 답변을 지원합니다.</div>
+              </div>
+
+              <button id="mobileHistoryOpen" type="button" class="lg:hidden shrink-0 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700">
+                <i class="fas fa-clock-rotate-left mr-2 text-blue-600"></i>히스토리
+              </button>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 lg:justify-end">
+              <select id="modeSelect" class="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-300">
+                <option value="chat">일반 채팅</option>
+                <option value="rag">RAG 모드</option>
+                <option value="auto">AUTO 모드</option>
+                <option value="speed_agent">SPEED_AGENT 모드</option>
+              </select>
+              <div id="ragCollectionWrap" class="hidden min-w-[220px]">
+                <select id="ragCollection" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-300">
+                  <option value="">컬렉션 선택</option>
+                </select>
+                <div id="ragAliasHint" class="mt-2 hidden px-1 text-xs text-slate-500"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="chatViewport" class="thin-scrollbar flex-1 min-h-0 overflow-y-auto p-4 lg:p-6">
+          <div id="emptyState" class="flex h-full min-h-[360px] items-center justify-center">
+            <div class="max-w-xl text-center">
+              <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-blue-50 text-blue-600">
+                <i class="fas fa-comments text-xl"></i>
+              </div>
+              <h2 class="mt-5 text-3xl font-extrabold tracking-tight text-slate-900">무엇을 도와드릴까요?</h2>
+            </div>
+          </div>
+
+          <div id="chatWrap" class="hidden space-y-4"></div>
+        </div>
+
+        <div class="border-t border-slate-200 bg-white p-4">
+          <div class="mb-3 flex items-center justify-between gap-3">
+            <div class="text-xs text-slate-400">Enter 전송 · Shift+Enter 줄바꿈</div>
+            <div class="inline-flex items-center gap-3">
+              <button id="btnThought"
+                      type="button"
+                      onclick="toggleAgentLogPanel()"
+                      class="hidden rounded-2xl bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90">
+                생각
+              </button>
+              <span id="badge" class="hidden rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700">idle</span>
+              <span class="text-xs text-slate-400"><span id="charCount">0</span>/2000</span>
+            </div>
+          </div>
+          <div class="flex items-end gap-3">
+            <div class="flex-1 rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-3">
+              <textarea id="msg" rows="1" placeholder="질문을 입력하세요" class="w-full resize-none bg-transparent text-sm outline-none placeholder:text-slate-400"></textarea>
+            </div>
+            <button id="btnStop" type="button" class="hidden h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700">
+              중지
+            </button>
+            <button id="btnSend" type="button" class="h-12 w-12 rounded-2xl bg-slate-900 text-white shadow-soft hover:opacity-90">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </section>
+</main>
+    </div>
+  </div>
+
+  <div id="mobileSidebarBackdrop" class="hidden fixed inset-0 z-40 bg-slate-900/30 lg:hidden"></div>
+  <aside id="mobileSidebar" class="fixed inset-y-0 left-0 z-50 w-72 -translate-x-full border-r border-slate-200 bg-white transition-transform duration-300 lg:hidden">
+    <div class="flex h-full flex-col">
+      <div class="flex items-center justify-between border-b border-slate-200 px-5 py-5">
+        <div>
+          <div class="font-extrabold">한림대학교 AI 튜터</div>
+          <div class="text-xs text-slate-500">{{ student_id }}</div>
+        </div>
+        <button id="mobileMenuClose" class="h-10 w-10 rounded-xl border border-slate-200 bg-white"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="p-4 space-y-2">
+        <a href="/dashboard" class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-slate-800"><i class="fas fa-chart-pie"></i><span>Dashboard</span></a>
+        <a href="/rag" class="flex items-center gap-3 rounded-2xl bg-slate-900 px-4 py-4 text-white"><i class="fas fa-comments"></i><span>채팅</span></a>
+      </div>
+      <div class="mt-auto p-4">
+        <a href="/logout" class="flex items-center justify-center gap-2 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700"><i class="fas fa-right-from-bracket"></i>로그아웃</a>
+      </div>
+    </div>
+  </aside>
+
+  <div id="mobileHistoryBackdrop" class="hidden fixed inset-0 z-40 bg-slate-900/30 lg:hidden"></div>
+  <aside id="mobileHistoryPanel" class="fixed inset-y-0 left-0 z-50 w-[88vw] max-w-sm -translate-x-full border-r border-slate-200 bg-white transition-transform duration-300 lg:hidden">
+    <div class="flex h-full flex-col">
+      <div class="flex items-center justify-between border-b border-slate-200 px-5 py-5">
+        <div>
+          <div class="font-extrabold">대화기록</div>
+          <div class="text-xs text-slate-500">컨텐츠 영역 전용 히스토리</div>
+        </div>
+        <button id="mobileHistoryClose" class="h-10 w-10 rounded-xl border border-slate-200 bg-white"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="border-b border-slate-200 p-4">
+        <button id="mobileNewChatBtn" type="button" class="w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-soft hover:opacity-90">
+          <i class="fas fa-plus mr-2"></i>새 대화 시작
+        </button>
+      </div>
+      <div class="px-4 pt-4 pb-3">
+        <div class="relative">
+          <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+          <input id="mobileHistorySearch" type="text" placeholder="대화 검색" class="w-full rounded-2xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-blue-300" />
+        </div>
+      </div>
+      <div id="mobileConversationList" class="thin-scrollbar overflow-y-auto px-4 pb-4 space-y-2"></div>
+    </div>
+  </aside>
+
+<script>
+  marked.setOptions({
+    breaks: true,
+    highlight(code, lang) {
+      if (lang && hljs.getLanguage(lang)) return hljs.highlight(code, { language: lang }).value;
+      return hljs.highlightAuto(code).value;
+    }
+  });
+
+  const state = {
+    sid: '',
+    mode: 'chat',
+    streamController: null,
+    assistantBubble: null,
+    sources: [],
+    currentStreamText: '',
+    currentConversationTitle: '',
+    currentConversationUpdatedAt: '',
+    aliases: [],
+    agentLogs: [],
+    agentSummary: '',
+    currentThoughtTarget: null,
+    activeThoughtTarget: null,
+    messageThoughts: [],
+    lastUserMessage: '',
+    streamFinished: true
+  };
+
+  const INTERNAL_THOUGHT_EVENT_NAMES = new Set([
+    'thinking', 'thought', 'reasoning', 'step', 'agent_log',
+    'agent_step', 'tool_call', 'tool_result', 'observation'
+  ]);
+  const SUPPRESSED_STREAM_EVENT_NAMES = new Set(['observation', 'tool_result']);
+  const VISIBLE_THOUGHT_EVENT_NAMES = new Set(
+    Array.from(INTERNAL_THOUGHT_EVENT_NAMES).filter((name) => !SUPPRESSED_STREAM_EVENT_NAMES.has(name))
+  );
+  const SUMMARY_EVENT_NAMES = new Set(['summary', 'agent_summary']);
+  const COMPLETION_EVENT_NAMES = new Set(['done', 'finish', 'completed']);
+  const FINAL_TEXT_EVENT_NAMES = new Set(['final']);
+
+  function isThoughtEventName(value) {
+    return INTERNAL_THOUGHT_EVENT_NAMES.has(String(value || '').trim().toLowerCase());
+  }
+
+  function isVisibleThoughtEventName(value) {
+    return VISIBLE_THOUGHT_EVENT_NAMES.has(String(value || '').trim().toLowerCase());
+  }
+
+  function isSuppressedStreamEventName(value) {
+    return SUPPRESSED_STREAM_EVENT_NAMES.has(String(value || '').trim().toLowerCase());
+  }
+
+  function normalizeStepValue(value) {
+    if (value == null || value === '') return null;
+    const num = Number(value);
+    return Number.isFinite(num) ? num : null;
+  }
+
+  function extractStepFromPayload(payload) {
+    if (!payload || typeof payload !== 'object') return null;
+
+    const direct = normalizeStepValue(payload.step);
+    if (direct != null) return direct;
+
+    const nested = payload.data && typeof payload.data === 'object'
+      ? normalizeStepValue(payload.data.step)
+      : null;
+    if (nested != null) return nested;
+
+    const meta = payload.metadata && typeof payload.metadata === 'object'
+      ? normalizeStepValue(payload.metadata.step)
+      : null;
+    if (meta != null) return meta;
+
+    return null;
+  }
+
+  const mobileMenuOpen = document.getElementById('mobileMenuOpen');
+  const mobileMenuClose = document.getElementById('mobileMenuClose');
+  const mobileSidebar = document.getElementById('mobileSidebar');
+  const mobileSidebarBackdrop = document.getElementById('mobileSidebarBackdrop');
+
+  const mobileHistoryOpen = document.getElementById('mobileHistoryOpen');
+  const mobileHistoryClose = document.getElementById('mobileHistoryClose');
+  const mobileHistoryPanel = document.getElementById('mobileHistoryPanel');
+  const mobileHistoryBackdrop = document.getElementById('mobileHistoryBackdrop');
+
+  const myMenuButton = document.getElementById('myMenuButton');
+  const myMenu = document.getElementById('myMenu');
+
+  const msg = document.getElementById('msg');
+  const charCount = document.getElementById('charCount');
+  const btnSend = document.getElementById('btnSend');
+  const btnStop = document.getElementById('btnStop');
+  const badge = document.getElementById('badge');
+  const btnThought = document.getElementById('btnThought');
+
+  const emptyState = document.getElementById('emptyState');
+  const chatWrap = document.getElementById('chatWrap');
+  const chatViewport = document.getElementById('chatViewport');
+  const chatTitle = document.getElementById('chatTitle');
+  const chatMeta = document.getElementById('chatMeta');
+
+  const modeSelect = document.getElementById('modeSelect');
+  const MODE_STORAGE_PREFIX = 'chat_mode:';
+
+  function getCurrentStudentId() {
+    return String('{{ student_id }}' || 'anonymous').trim() || 'anonymous';
+  }
+
+  function getModeStorageKey() {
+    return `${MODE_STORAGE_PREFIX}${getCurrentStudentId()}`;
+  }
+
+  function getValidModes() {
+    // select에는 chat/rag/auto/speed_agent만 있지만, 기존 history/agent 코드 호환을 위해 agent도 허용
+    return ['chat', 'rag', 'agent', 'auto', 'speed_agent'];
+  }
+
+  function normalizeSavedMode(mode) {
+    const value = String(mode || '').trim().toLowerCase();
+    return getValidModes().includes(value) ? value : 'chat';
+  }
+
+  function saveSelectedMode(mode) {
+    const normalized = normalizeSavedMode(mode);
+    try {
+      localStorage.setItem(getModeStorageKey(), normalized);
+    } catch (err) {
+      console.warn('모드 저장 실패:', err);
+    }
+  }
+
+  function loadSelectedMode() {
+    try {
+      return normalizeSavedMode(localStorage.getItem(getModeStorageKey()));
+    } catch (err) {
+      console.warn('모드 복원 실패:', err);
+      return 'chat';
+    }
+  }
+
+  const ragCollectionWrap = document.getElementById('ragCollectionWrap');
+  const ragCollection = document.getElementById('ragCollection');
+  const ragAliasHint = document.getElementById('ragAliasHint');
+  const agentLogPanel = document.getElementById('agentLogPanel');
+  const agentLogBackdrop = document.getElementById('agentLogBackdrop');
+  const agentLogBody = document.getElementById('agentLogBody');
+  const agentLogStatus = document.getElementById('agentLogStatus');
+
+  const conversationList = document.getElementById('conversationList');
+  const mobileConversationList = document.getElementById('mobileConversationList');
+  const historySearch = document.getElementById('historySearch');
+  const mobileHistorySearch = document.getElementById('mobileHistorySearch');
+
+  function openMobileSidebar() {
+    mobileSidebar.classList.remove('-translate-x-full');
+    mobileSidebarBackdrop.classList.remove('hidden');
+  }
+  function closeMobileSidebar() {
+    mobileSidebar.classList.add('-translate-x-full');
+    mobileSidebarBackdrop.classList.add('hidden');
+  }
+  function openMobileHistory() {
+    mobileHistoryPanel.classList.remove('-translate-x-full');
+    mobileHistoryBackdrop.classList.remove('hidden');
+  }
+  function closeMobileHistory() {
+    mobileHistoryPanel.classList.add('-translate-x-full');
+    mobileHistoryBackdrop.classList.add('hidden');
+  }
+  function toggleMyMenu() {
+    myMenu.classList.toggle('hidden');
+  }
+  function closeMyMenu() {
+    myMenu.classList.add('hidden');
+  }
+
+  function syncAgentPanelFromThought(thought) {
+    if (!thought) {
+      state.activeThoughtTarget = null;
+      state.agentLogs = [];
+      state.agentSummary = '';
+      return;
+    }
+    state.activeThoughtTarget = thought;
+    state.agentLogs = Array.isArray(thought.logsData) ? thought.logsData.slice() : [];
+    state.agentSummary = thought.summaryText || '';
+  }
+
+  function renderAgentLogPanel() {
+    if (!agentLogBody) return;
+
+    const summaryHtml = state.agentSummary
+      ? `<div class="px-1 py-1">
+           <div class="text-xs font-medium uppercase tracking-[0.18em] text-slate-600">요약</div>
+           <div class="mt-1 text-sm leading-7 text-slate-900">${escapeHtml(state.agentSummary).replace(/\n/g, '<br>')}</div>
+         </div>`
+      : '';
+
+    const logsHtml = state.agentLogs.length
+      ? state.agentLogs.map((log, idx) => {
+          const stepLabel = Number.isFinite(Number(log?.step))
+            ? `Step ${Number(log.step)}`
+            : `Step ${idx + 1}`;
+
+          return `
+            <div class="px-1 py-1">
+              <div class="flex items-center justify-between gap-3">
+                <div class="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">${stepLabel}</div>
+                <div class="text-[11px] font-medium text-slate-500">${escapeHtml(log?.type || 'log')}</div>
+              </div>
+              <div class="mt-1 text-sm leading-7 text-slate-900">${escapeHtml(log?.text || '').replace(/\n/g, '<br>')}</div>
+            </div>
+          `;
+        }).join('')
+      : `<div class="rounded-2xl border border-dashed border-slate-300 px-4 py-6 text-sm leading-7 text-slate-500">
+           에이전트 로그가 아직 없습니다.
+         </div>`;
+
+    agentLogBody.innerHTML = `<div class="space-y-3">${summaryHtml}${logsHtml}</div>`;
+
+    if (agentLogStatus) {
+      if (usesAgentStylePanel(state.mode) || state.agentLogs.length || state.agentSummary) {
+        agentLogStatus.textContent = state.agentLogs.length
+          ? `총 ${state.agentLogs.length}개의 단계 로그`
+          : (state.agentSummary ? '에이전트 요약만 있습니다' : '에이전트 로그 대기 중');
+      } else {
+        agentLogStatus.textContent = '에이전트 모드가 아닙니다';
+      }
+    }
+
+    if (btnThought) {
+      btnThought.classList.add('hidden');
+    }
+  }
+
+  function openAgentLogPanel() {
+    document.body.classList.add('agent-panel-open');
+  }
+
+  function closeAgentLogPanel() {
+    document.body.classList.remove('agent-panel-open');
+  }
+
+  function toggleAgentLogPanel() {
+    if (!(usesAgentStylePanel(state.mode) || state.agentLogs.length || state.agentSummary)) return;
+    if (!state.activeThoughtTarget && state.currentThoughtTarget) {
+      syncAgentPanelFromThought(state.currentThoughtTarget);
+      renderAgentLogPanel();
+    }
+    document.body.classList.toggle('agent-panel-open');
+  }
+
+  function openThoughtInSidebar(thought) {
+    syncAgentPanelFromThought(thought);
+    renderAgentLogPanel();
+    openAgentLogPanel();
+  }
+
+  function resetAgentLogs() {
+    state.agentLogs = [];
+    state.agentSummary = '';
+    state.activeThoughtTarget = null;
+    renderAgentLogPanel();
+    closeAgentLogPanel();
+  }
+
+  function normalizeThoughtLogEntry(entry, fallbackType = 'log') {
+    if (entry == null) return null;
+    if (typeof entry === 'string') {
+      const text = entry.trim();
+      return text ? { type: fallbackType, text } : null;
+    }
+
+    const inferredType = String(entry.type || entry.event || entry.event_type || fallbackType || 'log');
+    if (isSuppressedStreamEventName(inferredType)) return null;
+
+    let text = String(
+      entry.text ??
+      entry.message ??
+      entry.content ??
+      entry.detail ??
+      entry.output ??
+      entry.result ??
+      entry.step ??
+      entry.summary ??
+      ''
+    ).trim();
+
+    if (!text && (inferredType === 'tool_call' || inferredType === 'call')) {
+      const toolName = String(entry.tool_name || entry.tool || entry.name || '').trim();
+      const args = entry.arguments ?? entry.args ?? entry.input ?? null;
+      const argText = args == null
+        ? ''
+        : (typeof args === 'string' ? args : JSON.stringify(args, null, 2));
+      text = [toolName, argText].filter(Boolean).join(argText ? '\n' : '');
+    }
+
+    if (!text && typeof entry.data === 'object' && entry.data) {
+      text = String(
+        entry.data.text ??
+        entry.data.message ??
+        entry.data.content ??
+        entry.data.detail ??
+        entry.data.output ??
+        entry.data.result ??
+        entry.data.summary ??
+        ''
+      ).trim();
+    }
+
+    if (!text) return null;
+    return {
+      type: inferredType,
+      text
+    };
+  }
+
+  function normalizeModeValue(value) {
+    return String(value || '').trim().toLowerCase();
+  }
+
+  function usesAgentStylePanel(value) {
+    const mode = normalizeModeValue(value);
+    return mode === 'agent' || mode === 'auto' || mode === 'speed_agent';
+  }
+
+  function isAgentModeValue(value) {
+    return usesAgentStylePanel(value);
+  }
+
+  function getMessageKey(item = {}) {
+    const raw = item?.message_id ?? item?.id ?? item?.uuid ?? item?._id ?? item?.assistant_message_id ?? null;
+    return raw == null ? null : String(raw);
+  }
+
+  function getEventName(ev = {}) {
+    return String(ev?.event_type ?? ev?.event ?? ev?.type ?? ev?.name ?? '').trim().toLowerCase();
+  }
+
+  function getEventPayload(ev = {}) {
+    const raw = ev?.data;
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) return raw;
+    if (ev?.metadata && typeof ev.metadata === 'object' && !Array.isArray(ev.metadata)) return ev.metadata;
+    return {};
+  }
+
+  function getEventText(ev = {}) {
+    const data = getEventPayload(ev);
+    return String(
+      ev?.text ??
+      ev?.message ??
+      ev?.content ??
+      ev?.detail ??
+      ev?.output ??
+      ev?.result ??
+      ev?.summary ??
+      data?.text ??
+      data?.message ??
+      data?.content ??
+      data?.detail ??
+      data?.output ??
+      data?.result ??
+      data?.summary ??
+      ''
+    ).trim();
+  }
+
+  function getEventMessageKeys(ev = {}) {
+    const data = getEventPayload(ev);
+    return [
+      ev?.message_id,
+      ev?.assistant_message_id,
+      ev?.response_message_id,
+      ev?.parent_message_id,
+      ev?.target_message_id,
+      data?.message_id,
+      data?.assistant_message_id,
+      data?.response_message_id,
+      data?.parent_message_id,
+      data?.target_message_id
+    ]
+      .filter((value) => value != null && String(value).trim() !== '')
+      .map((value) => String(value));
+  }
+
+  function eventLooksAgentGenerated(ev = {}) {
+    const data = getEventPayload(ev);
+    return isThoughtEventName(getEventName(ev))
+      || SUMMARY_EVENT_NAMES.has(getEventName(ev))
+      || isAgentModeValue(ev?.mode)
+      || isAgentModeValue(ev?.route)
+      || isAgentModeValue(ev?.selected_route)
+      || isAgentModeValue(data?.mode)
+      || isAgentModeValue(data?.route)
+      || isAgentModeValue(data?.selected_route)
+      || isAgentModeValue(data?.source_mode);
+  }
+
+  function dedupeThoughtLogs(logs = []) {
+    const seen = new Set();
+    const out = [];
+    for (const entry of logs) {
+      const normalized = normalizeThoughtLogEntry(entry);
+      if (!normalized) continue;
+      const key = `${normalized.type}::${normalized.text}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(normalized);
+    }
+    return out;
+  }
+
+  function collectThoughtLogsFromEvents(events) {
+    if (!Array.isArray(events)) return [];
+    return dedupeThoughtLogs(
+      events.map((ev) => {
+        const type = getEventName(ev);
+        if (!isVisibleThoughtEventName(type)) return null;
+        return normalizeThoughtLogEntry({ type, text: getEventText(ev) }, type || 'log');
+      })
+    );
+  }
+
+  function collectSummaryFromEvents(events) {
+    if (!Array.isArray(events)) return '';
+    for (let i = events.length - 1; i >= 0; i -= 1) {
+      const ev = events[i];
+      const type = getEventName(ev);
+      if (!SUMMARY_EVENT_NAMES.has(type)) continue;
+      const text = getEventText(ev);
+      if (text) return text;
+    }
+    return '';
+  }
+
+  function messageLooksAgentGenerated(item = {}, conversationMode = '', bundle = null) {
+    const metadata = item?.metadata || {};
+    return !!(
+      isAgentModeValue(item?.mode) ||
+      isAgentModeValue(item?.route) ||
+      isAgentModeValue(item?.assistant_mode) ||
+      isAgentModeValue(item?.source_mode) ||
+      isAgentModeValue(metadata?.mode) ||
+      isAgentModeValue(metadata?.route) ||
+      isAgentModeValue(metadata?.selected_route) ||
+      isAgentModeValue(metadata?.assistant_mode) ||
+      isAgentModeValue(metadata?.source_mode) ||
+      isAgentModeValue(conversationMode) ||
+      (bundle && bundle.agentGenerated) ||
+      (bundle && Array.isArray(bundle.logs) && bundle.logs.length) ||
+      (bundle && bundle.summary)
+    );
+  }
+
+  function buildHistoricalThoughtContext(events = []) {
+    const byKey = new Map();
+    const loose = [];
+    let currentLooseBundle = null;
+
+    function ensureKeyedBundle(keys) {
+      let bundle = null;
+      for (const key of keys) {
+        const normalizedKey = String(key);
+        if (byKey.has(normalizedKey)) {
+          bundle = byKey.get(normalizedKey);
+          break;
+        }
+      }
+      if (!bundle) {
+        bundle = { logs: [], summary: '', agentGenerated: false };
+      }
+      for (const key of keys) {
+        byKey.set(String(key), bundle);
+      }
+      return bundle;
+    }
+
+    function ensureLooseBundle() {
+      if (!currentLooseBundle) {
+        currentLooseBundle = { logs: [], summary: '', agentGenerated: false };
+        loose.push(currentLooseBundle);
+      }
+      return currentLooseBundle;
+    }
+
+    for (const ev of (Array.isArray(events) ? events : [])) {
+      const eventName = getEventName(ev);
+      if (!eventName) continue;
+
+      const keys = getEventMessageKeys(ev);
+      const isThought = isThoughtEventName(eventName);
+      const isVisibleThought = isVisibleThoughtEventName(eventName);
+      const isSummary = SUMMARY_EVENT_NAMES.has(eventName);
+      const touchesThought = isThought || isSummary;
+
+      let bundle = null;
+      if (keys.length) {
+        bundle = ensureKeyedBundle(keys);
+      } else if (touchesThought) {
+        bundle = ensureLooseBundle();
+      }
+
+      if (bundle) {
+        if (eventLooksAgentGenerated(ev)) bundle.agentGenerated = true;
+
+        if (isVisibleThought) {
+          const log = normalizeThoughtLogEntry({ type: eventName, text: getEventText(ev) }, eventName || 'log');
+          if (log) bundle.logs.push(log);
+        }
+
+        if (isSummary) {
+          const summaryText = getEventText(ev);
+          if (summaryText && !bundle.summary) bundle.summary = summaryText;
+        }
+      }
+
+      if (COMPLETION_EVENT_NAMES.has(eventName)) {
+        currentLooseBundle = null;
+      }
+    }
+
+    for (const bundle of byKey.values()) {
+      bundle.logs = dedupeThoughtLogs(bundle.logs);
+    }
+    for (const bundle of loose) {
+      bundle.logs = dedupeThoughtLogs(bundle.logs);
+    }
+
+    return { byKey, loose, looseCursor: 0 };
+  }
+
+  function extractHistoricalThoughtBundle(item = {}, historyContext = null) {
+    const metadata = item?.metadata || {};
+    const inlineEvents = []
+      .concat(Array.isArray(item?.events) ? item.events : [])
+      .concat(Array.isArray(metadata?.events) ? metadata.events : []);
+
+    const directLogs = []
+      .concat(Array.isArray(item?.agent_logs) ? item.agent_logs : [])
+      .concat(Array.isArray(item?.thoughts) ? item.thoughts : [])
+      .concat(Array.isArray(item?.reasoning_steps) ? item.reasoning_steps : [])
+      .concat(Array.isArray(item?.steps) ? item.steps : [])
+      .concat(Array.isArray(metadata?.agent_logs) ? metadata.agent_logs : [])
+      .concat(Array.isArray(metadata?.thoughts) ? metadata.thoughts : [])
+      .concat(Array.isArray(metadata?.reasoning_steps) ? metadata.reasoning_steps : [])
+      .concat(Array.isArray(metadata?.steps) ? metadata.steps : [])
+      .concat(collectThoughtLogsFromEvents(inlineEvents));
+
+    let summary = String(
+      item?.agent_summary ??
+      item?.summary ??
+      metadata?.agent_summary ??
+      metadata?.summary ??
+      collectSummaryFromEvents(inlineEvents) ??
+      ''
+    ).trim();
+
+    let matchedBundle = null;
+    const messageKey = getMessageKey(item);
+
+    if (historyContext) {
+      if (messageKey && historyContext.byKey.has(messageKey)) {
+        matchedBundle = historyContext.byKey.get(messageKey);
+      } else if (historyContext.looseCursor < historyContext.loose.length) {
+        matchedBundle = historyContext.loose[historyContext.looseCursor];
+        historyContext.looseCursor += 1;
+      }
+    }
+
+    const mergedLogs = dedupeThoughtLogs([
+      ...directLogs,
+      ...(matchedBundle?.logs || [])
+    ]);
+
+    if (!summary && matchedBundle?.summary) {
+      summary = matchedBundle.summary;
+    }
+
+    return {
+      logs: mergedLogs,
+      summary,
+      agentGenerated: !!(matchedBundle?.agentGenerated)
+    };
+  }
+
+  function renderThoughtBubble(thought) {
+    if (!thought) return;
+
+    const hasSummary = !!String(thought.summaryText || '').trim();
+    const hasLogs = Array.isArray(thought.logsData) && thought.logsData.length > 0;
+
+    const latestThoughtLog = hasLogs
+      ? [...thought.logsData].reverse().find((log) => isLiveThoughtEventName(log?.type) && String(log?.text || '').trim())
+      : null;
+
+    const latestLog = latestThoughtLog || (
+      hasLogs
+        ? [...thought.logsData].reverse().find((log) => String(log?.text || '').trim())
+        : null
+    );
+
+    const hasThoughtResult = !!(hasSummary || hasLogs);
+    const shouldHideInline = !!thought.hiddenByChunk || state.streamFinished;
+    const shouldShowInline = hasThoughtResult && !shouldHideInline;
+    const shouldShowButton = hasThoughtResult && state.streamFinished;
+
+    thought.wrap.classList.toggle('hidden', !(shouldShowInline || shouldShowButton));
+
+    if (latestLog && shouldShowInline) {
+      thought.live.classList.remove('hidden');
+      thought.live.innerHTML = `${escapeHtml(latestLog.text || '').replace(/\n/g, '<br>')}`;
+    } else {
+      thought.live.classList.add('hidden');
+      thought.live.innerHTML = '';
+    }
+
+    if (hasSummary && shouldShowInline) {
+      thought.summary.classList.remove('hidden');
+      thought.summary.innerHTML = `${escapeHtml(thought.summaryText).replace(/\n/g, '<br>')}`;
+    } else {
+      thought.summary.classList.add('hidden');
+      thought.summary.innerHTML = '';
+    }
+
+    thought.panel.classList.toggle('hidden', !shouldShowInline);
+
+    if (thought.actionButton) {
+      thought.actionButton.classList.toggle('hidden', !shouldShowButton);
+    }
+
+    scrollToBottom();
+  }
+
+  function hydrateThoughtBubble(thought, bundle) {
+    if (!thought || !bundle) return;
+    thought.logsData = Array.isArray(bundle.logs) ? bundle.logs.slice() : [];
+    thought.summaryText = bundle.summary || '';
+    renderThoughtBubble(thought);
+  }
+
+  function getLastAssistantThought() {
+    return state.messageThoughts.length ? state.messageThoughts[state.messageThoughts.length - 1] : null;
+  }
+
+  function rememberThoughtTarget(thought) {
+    if (!thought) return;
+    if (!state.messageThoughts.includes(thought)) {
+      state.messageThoughts.push(thought);
+    }
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text ?? '';
+    return div.innerHTML;
+  }
+
+  function renderMarkdown(text) {
+    const raw = text || '';
+    return marked.parse(raw);
+  }
+
+  function scrollToBottom() {
+    chatViewport.scrollTop = chatViewport.scrollHeight;
+  }
+
+  function updateCharCount() {
+    charCount.textContent = String((msg.value || '').length);
+  }
+
+  function autoResizeTextarea() {
+    msg.style.height = 'auto';
+    msg.style.height = Math.min(msg.scrollHeight, 160) + 'px';
+  }
+
+  function setStatus(value) {
+    badge.textContent = value;
+    if (value === 'idle') {
+      badge.className = 'hidden rounded-full bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700';
+    } else if (value === 'streaming') {
+      badge.className = 'inline-flex rounded-full bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700';
+    } else if (value === 'error') {
+      badge.className = 'inline-flex rounded-full bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-600';
+    }
+  }
+
+  function ensureChatVisible() {
+    emptyState.classList.add('hidden');
+    chatWrap.classList.remove('hidden');
+  }
+
+  function formatRelative(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return '';
+    const diff = Math.max(0, Date.now() - date.getTime());
+    const sec = Math.floor(diff / 1000);
+    const min = Math.floor(sec / 60);
+    const hour = Math.floor(min / 60);
+    const day = Math.floor(hour / 24);
+    if (sec < 60) return '방금 전';
+    if (min < 60) return `${min}분 전`;
+    if (hour < 24) return `${hour}시간 전`;
+    if (day < 7) return `${day}일 전`;
+    return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+  }
+
+  function buildMessageRow(role, content = '', isStreaming = false) {
+    const row = document.createElement('div');
+    row.className = role === 'user' ? 'flex items-start justify-end gap-3' : 'flex items-start gap-3';
+
+    const avatar = document.createElement('div');
+    avatar.className = role === 'user'
+      ? 'h-10 w-10 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center shrink-0'
+      : 'h-10 w-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0';
+    avatar.innerHTML = role === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+
+    const bubble = document.createElement('div');
+    bubble.className = role === 'user'
+      ? 'max-w-[85%] rounded-3xl rounded-tr-md bg-slate-900 px-4 py-3 text-sm leading-7 text-white'
+      : 'max-w-[85%] rounded-3xl rounded-tl-md border border-slate-200 bg-white px-4 py-4 text-sm leading-8 text-slate-700 shadow-soft';
+
+    const contentEl = document.createElement('div');
+    if (role === 'assistant') contentEl.className = 'md';
+    if (role === 'assistant') {
+      contentEl.innerHTML = renderMarkdown(content);
+    } else {
+      contentEl.innerHTML = escapeHtml(content).replace(/\n/g, '<br>');
+    }
+
+    bubble.appendChild(contentEl);
+
+    let thought = null;
+
+    if (role === 'assistant') {
+      const thoughtWrap = document.createElement('div');
+      thoughtWrap.className = 'mt-2 hidden';
+
+      const thoughtPanel = document.createElement('div');
+      thoughtPanel.className = 'mt-2 hidden';
+
+      const thoughtLive = document.createElement('div');
+      thoughtLive.className = 'hidden text-sm leading-7 text-slate-400 cursor-pointer select-none';
+
+      const thoughtSummary = document.createElement('div');
+      thoughtSummary.className = 'hidden text-sm leading-7 text-slate-400 cursor-pointer select-none';
+
+      const thoughtButton = document.createElement('button');
+      thoughtButton.type = 'button';
+      thoughtButton.className = 'hidden mt-3 inline-flex items-center rounded-2xl bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90';
+      thoughtButton.textContent = '생각 보기';
+
+      const openSidebar = () => {
+        if (!thought) return;
+        openThoughtInSidebar(thought);
+        renderThoughtBubble(thought);
+        state.messageThoughts.forEach((item) => renderThoughtBubble(item));
+      };
+
+      thoughtLive.addEventListener('click', openSidebar);
+      thoughtSummary.addEventListener('click', openSidebar);
+      thoughtButton.addEventListener('click', openSidebar);
+
+      thoughtPanel.appendChild(thoughtLive);
+      thoughtPanel.appendChild(thoughtSummary);
+      thoughtWrap.appendChild(thoughtPanel);
+      thoughtWrap.appendChild(thoughtButton);
+      bubble.appendChild(thoughtWrap);
+
+      thought = {
+        wrap: thoughtWrap,
+        panel: thoughtPanel,
+        live: thoughtLive,
+        summary: thoughtSummary,
+        actionButton: thoughtButton,
+        countEl: null,
+        contentEl,
+        logsData: [],
+        summaryText: '',
+        hiddenByChunk: false
+      };
+    }
+
+    if (role === 'user') {
+      row.appendChild(bubble);
+      row.appendChild(avatar);
+    } else {
+      row.appendChild(avatar);
+      row.appendChild(bubble);
+    }
+
+    chatWrap.appendChild(row);
+    scrollToBottom();
+    return { row, bubble, contentEl, thought };
+  }
+
+  function updateAssistantBubble(text) {
+    if (!state.assistantBubble) return;
+    if (state.assistantBubble.thought) {
+      state.assistantBubble.thought.hiddenByChunk = true;
+      renderThoughtBubble(state.assistantBubble.thought);
+    }
+    state.assistantBubble.contentEl.innerHTML = renderMarkdown(text);
+    state.assistantBubble.contentEl.querySelectorAll('pre code').forEach((el) => {
+      try { hljs.highlightElement(el); } catch {}
+    });
+    scrollToBottom();
+  }
+
+  function setMode(mode, options = {}) {
+    const nextMode = normalizeSavedMode(mode);
+
+    state.mode = nextMode;
+
+    if (modeSelect) {
+      modeSelect.value = nextMode;
+    }
+
+    if (nextMode === 'rag') {
+      ragCollectionWrap.classList.remove('hidden');
+      loadRagCollections();
+      chatMeta.textContent = '내부 DB 기반 답변을 지원합니다.';
+    } else if (nextMode === 'agent') {
+      ragCollectionWrap.classList.add('hidden');
+      chatMeta.textContent = '에이전트가 단계적으로 판단해 답변합니다.';
+    } else if (nextMode === 'auto') {
+      ragCollectionWrap.classList.add('hidden');
+      chatMeta.textContent = 'AUTO 모드가 자동 라우팅으로 답변합니다.';
+    } else if (nextMode === 'speed_agent') {
+      ragCollectionWrap.classList.add('hidden');
+      chatMeta.textContent = 'SPEED_AGENT 모드가 최소 단계로 빠르게 답변합니다.';
+    } else {
+      ragCollectionWrap.classList.add('hidden');
+      chatMeta.textContent = '일반 질문과 내부 DB 기반 답변을 지원합니다.';
+    }
+
+    if (options.persist !== false) {
+      saveSelectedMode(nextMode);
+    }
+
+    if (!usesAgentStylePanel(nextMode) && !(state.agentLogs.length || state.agentSummary)) {
+      closeAgentLogPanel();
+    }
+
+    renderAgentLogPanel();
+  }
+
+  function resetChatUI() {
+    stopCurrentRequest();
+    state.sid = '';
+    state.currentConversationTitle = '';
+    state.currentConversationUpdatedAt = '';
+    state.assistantBubble = null;
+    state.currentThoughtTarget = null;
+    state.currentStreamText = '';
+    emptyState.classList.remove('hidden');
+    chatWrap.classList.add('hidden');
+    chatWrap.innerHTML = '';
+    chatTitle.textContent = '새 대화';
+    setMode(loadSelectedMode());
+    setStatus('idle');
+    msg.value = '';
+    updateCharCount();
+    autoResizeTextarea();
+    closeMobileHistory();
+    resetAgentLogs();
+  }
+
+  function getHistoryQuery() {
+    return (historySearch.value || mobileHistorySearch.value || '').trim().toLowerCase();
+  }
+
+  function normalizeMessageContent(item) {
+    if (typeof item?.content === 'string') return item.content;
+    if (Array.isArray(item?.parts)) return item.parts.map(p => typeof p === 'string' ? p : (p?.text || '')).join('\n');
+    if (Array.isArray(item?.content)) return item.content.map(p => p?.text || '').join('\n');
+    return '';
+  }
+
+  function renderConversationButtons(items) {
+    const query = getHistoryQuery();
+    const filtered = !query ? items : items.filter((item) => {
+      const title = String(item?.title || '').toLowerCase();
+      const mode = String(item?.mode || '').toLowerCase();
+      return title.includes(query) || mode.includes(query);
+    });
+
+    const renderOne = (item) => {
+      const active = state.sid && state.sid === item.sid;
+      const title = item.title || '(제목 없음)';
+      const updated = formatRelative(item.updated_at);
+      const modeLabel = String(item.mode || 'chat').toUpperCase();
+      return `
+        <button type="button"
+          data-sid="${escapeHtml(item.sid)}"
+          class="history-item w-full rounded-2xl border px-4 py-3 text-left transition ${active ? 'border-blue-200 bg-white shadow-soft' : 'border-slate-200 bg-white hover:bg-slate-50'}">
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <div class="text-sm font-semibold text-slate-900 break-words">${escapeHtml(title)}</div>
+              <div class="mt-1 text-xs text-slate-500">${escapeHtml(updated)}</div>
+            </div>
+            <div class="shrink-0 text-[11px] font-semibold ${modeLabel === 'RAG' ? 'text-blue-600' : 'text-slate-400'}">${escapeHtml(modeLabel)}</div>
+          </div>
+        </button>`;
+    };
+
+    const html = filtered.length
+      ? filtered.map(renderOne).join('')
+      : '<div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">검색 결과가 없습니다.</div>';
+
+    conversationList.innerHTML = html;
+    mobileConversationList.innerHTML = html;
+  }
+
+  async function refreshConversationList() {
+    try {
+      const res = await fetch('/api/log/conversations?limit=100', {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const items = Array.isArray(data?.items) ? data.items : [];
+      renderConversationButtons(items);
+    } catch (err) {
+      console.error('대화 목록 로딩 실패:', err);
+      const fallback = '<div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-rose-500">대화 목록을 불러오지 못했습니다.</div>';
+      conversationList.innerHTML = fallback;
+      mobileConversationList.innerHTML = fallback;
+    }
+  }
+
+  async function openConversationFromList(sid) {
+    try {
+      stopCurrentRequest();
+      const res = await fetch(`/api/log/conversations/${encodeURIComponent(sid)}`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      const messages = Array.isArray(data?.messages) ? data.messages : [];
+      const events = Array.isArray(data?.events) ? data.events : [];
+      const historyContext = buildHistoricalThoughtContext(events);
+
+      state.sid = sid;
+      state.currentConversationTitle = data?.title || messages.find(m => m.role === 'user')?.content || '대화';
+      state.currentConversationUpdatedAt = data?.updated_at || '';
+      chatTitle.textContent = state.currentConversationTitle;
+
+      // 히스토리를 열어도 현재 사용자가 선택한 모드를 유지한다.
+      // 기존에는 data.mode를 읽어서 setMode(...)를 다시 호출했기 때문에
+      // 과거 일반 채팅 기록을 누르면 현재 모드가 chat으로 되돌아갔다.
+      setMode(loadSelectedMode(), { persist: false });
+
+      ensureChatVisible();
+      chatWrap.innerHTML = '';
+      state.messageThoughts = [];
+      state.currentThoughtTarget = null;
+
+      let lastThoughtWithLogs = null;
+      resetAgentLogs();
+
+      for (const item of messages) {
+        const role = item.role === 'assistant' ? 'assistant' : item.role === 'user' ? 'user' : null;
+        if (!role) continue;
+
+        const built = buildMessageRow(role, normalizeMessageContent(item));
+
+        if (role === 'assistant' && built.thought) {
+          const bundle = extractHistoricalThoughtBundle(item, historyContext);
+          built.thought.agentGenerated = messageLooksAgentGenerated(item, data?.mode, bundle);
+          hydrateThoughtBubble(built.thought, bundle);
+          rememberThoughtTarget(built.thought);
+
+          if ((bundle.logs && bundle.logs.length) || bundle.summary) {
+            lastThoughtWithLogs = built.thought;
+          }
+        }
+      }
+
+      const legacyTopLevelBundle = {
+        logs: dedupeThoughtLogs(Array.isArray(data?.agent_logs) ? data.agent_logs : []),
+        summary: String(data?.agent_summary || '').trim(),
+        agentGenerated: isAgentModeValue(data?.mode)
+      };
+
+      if ((legacyTopLevelBundle.logs.length || legacyTopLevelBundle.summary) && !lastThoughtWithLogs && messages.length) {
+        const lastThought = getLastAssistantThought();
+        if (lastThought) {
+          hydrateThoughtBubble(lastThought, legacyTopLevelBundle);
+          lastThought.agentGenerated = true;
+          lastThoughtWithLogs = lastThought;
+        }
+      }
+
+      if (lastThoughtWithLogs) {
+        syncAgentPanelFromThought(lastThoughtWithLogs);
+      } else if (legacyTopLevelBundle.logs.length || legacyTopLevelBundle.summary) {
+        state.agentLogs = legacyTopLevelBundle.logs.slice();
+        state.agentSummary = legacyTopLevelBundle.summary;
+        state.activeThoughtTarget = null;
+      } else {
+        resetAgentLogs();
+      }
+
+      if (!messages.length) {
+        emptyState.classList.remove('hidden');
+        chatWrap.classList.add('hidden');
+      }
+
+      renderAgentLogPanel();
+      state.messageThoughts.forEach((item) => renderThoughtBubble(item));
+      refreshConversationList();
+      closeMobileHistory();
+    } catch (err) {
+      console.error('대화 복원 실패:', err);
+      ensureChatVisible();
+      buildMessageRow('assistant', '대화 복원에 실패했습니다.');
+    }
+  }
+
+  async function clearAllConversations() {
+    if (!confirm('대화기록을 모두 삭제할까요?')) return;
+    try {
+      const res = await fetch('/api/log/conversations', { method: 'DELETE' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    } catch (err) {
+      console.warn('전체 삭제 API 실패:', err);
+    }
+    resetChatUI();
+    refreshConversationList();
+    renderAgentLogPanel();
+  }
+
+  function normalizeAliasItems(data) {
+    const sourceItems = Array.isArray(data?.items)
+      ? data.items
+      : Array.isArray(data?.aliases)
+        ? data.aliases
+        : (data?.aliases && typeof data.aliases === 'object')
+          ? Object.entries(data.aliases).map(([alias, target]) => ({ alias, target }))
+          : [];
+
+    return sourceItems
+      .map((item) => {
+        if (item == null) return null;
+
+        if (typeof item === 'string') {
+          const value = item.trim();
+          if (!value) return null;
+          return {
+            alias: value,
+            target: value,
+            value,
+            label: value,
+            hint: value
+          };
+        }
+
+        const alias = String(item.label || item.display_name || item.alias || item.name || item.id || '').trim();
+        const target = String(item.target || item.collection || item.name || item.value || item.alias || item.id || '').trim();
+        const value = target || alias;
+        const label = alias || value;
+        if (!value || !label) return null;
+
+        return {
+          alias: label,
+          target: value,
+          value,
+          label,
+          hint: label !== value ? `${label} → ${value}` : label
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function renderRagAliasHint(items) {
+    if (!ragAliasHint) return;
+    if (!items.length) {
+      ragAliasHint.classList.add('hidden');
+      ragAliasHint.textContent = '';
+      return;
+    }
+    ragAliasHint.classList.remove('hidden');
+    ragAliasHint.textContent = `별칭: ${items.map((item) => item.hint).join(', ')}`;
+  }
+
+  async function loadRagCollections() {
+    try {
+      const res = await fetch('/api/aliases', {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const items = normalizeAliasItems(data);
+      state.aliases = items;
+
+      const selected = String(ragCollection?.value || '').trim();
+      const options = ['<option value="">컬렉션 선택</option>'].concat(
+        items.map((item) => `<option value="${escapeHtml(item.value)}">${escapeHtml(item.label)}</option>`)
+      );
+      ragCollection.innerHTML = options.join('');
+
+      const nextValue = items.some((item) => item.value === selected)
+        ? selected
+        : (items.length === 1 ? items[0].value : '');
+      ragCollection.value = nextValue;
+      renderRagAliasHint(items);
+    } catch (err) {
+      console.warn('컬렉션 목록 로딩 실패:', err);
+      state.aliases = [];
+      ragCollection.innerHTML = '<option value="">컬렉션 선택</option><option value="kb_current">kb_current</option>';
+      if (ragCollection.value !== 'kb_current') ragCollection.value = '';
+      if (ragAliasHint) {
+        ragAliasHint.classList.remove('hidden');
+        ragAliasHint.textContent = '별칭을 불러오지 못해 기본 컬렉션만 표시합니다.';
+      }
+    }
+  }
+
+  function parseSseChunk(chunk) {
+    const parts = chunk.split('\n');
+    let eventName = 'message';
+    const dataLines = [];
+    for (const line of parts) {
+      if (!line) continue;
+      if (line.startsWith('event:')) eventName = line.slice(6).trim();
+      else if (line.startsWith('data:')) dataLines.push(line.slice(5).trimStart());
+    }
+    return { event: eventName, data: dataLines.join('\n') };
+  }
+
+  function tryJson(text) {
+    try { return JSON.parse(text); } catch { return null; }
+  }
+
+  function extractTextFromPayload(payload) {
+    if (payload == null) return '';
+    if (typeof payload === 'string') return payload;
+    if (typeof payload.text === 'string') return payload.text;
+    if (typeof payload.delta === 'string') return payload.delta;
+    if (typeof payload.content === 'string') return payload.content;
+    if (typeof payload.message === 'string') return payload.message;
+    if (typeof payload.answer === 'string') return payload.answer;
+    if (typeof payload.token === 'string') return payload.token;
+    if (typeof payload.output === 'string') return payload.output;
+    if (typeof payload.result === 'string') return payload.result;
+    if (Array.isArray(payload.content)) return payload.content.map(x => x?.text || '').join('\n');
+    return '';
+  }
+
+  function normalizeStreamEventName(eventName, payload) {
+    const fallback = String(eventName || 'message').trim().toLowerCase() || 'message';
+    const candidates = [
+      eventName,
+      payload?.event,
+      payload?.event_name,
+      payload?.type,
+      payload?.name,
+      payload?.kind,
+      payload?.stage,
+      payload?.message_type,
+      payload?.status
+    ];
+
+    for (const candidate of candidates) {
+      const value = String(candidate || '').trim().toLowerCase();
+      if (!value) continue;
+      if (
+        value === 'error' ||
+        value === 'message' ||
+        value === 'conversation' ||
+        value === 'sid' ||
+        value === 'sources' ||
+        FINAL_TEXT_EVENT_NAMES.has(value) ||
+        isThoughtEventName(value) ||
+        SUMMARY_EVENT_NAMES.has(value) ||
+        COMPLETION_EVENT_NAMES.has(value)
+      ) {
+        return value;
+      }
+    }
+
+    return fallback;
+  }
+
+  function isLiveThoughtEventName(value) {
+    const name = String(value || '').trim().toLowerCase();
+    return name === 'thinking' || name === 'reasoning';
+  }
+
+  function upsertThoughtLog(thought, eventName, text, payload = null) {
+    if (!thought || !text) return null;
+    const normalized = String(eventName || '').trim().toLowerCase() || 'log';
+    const logs = Array.isArray(thought.logsData) ? thought.logsData : [];
+    thought.logsData = logs;
+
+    const step = extractStepFromPayload(payload);
+    const entry = {
+      type: normalized,
+      text: String(text || ''),
+      step
+    };
+
+    if (isLiveThoughtEventName(normalized) && logs.length) {
+      const last = logs[logs.length - 1];
+      const lastType = String(last?.type || '').trim().toLowerCase();
+      const lastStep = normalizeStepValue(last?.step);
+
+      if (lastType === normalized && lastStep === step) {
+        last.text = String(last.text || '') + String(entry.text || '');
+        if (step != null) last.step = step;
+        return last;
+      }
+    }
+
+    const last = logs[logs.length - 1];
+    if (
+      last &&
+      String(last.type || '').trim().toLowerCase() === normalized &&
+      normalizeStepValue(last.step) === step &&
+      String(last.text || '') === entry.text
+    ) {
+      return last;
+    }
+
+    logs.push(entry);
+    return entry;
+  }
+
+  function shouldIgnoreAssistantPayload(payload, text, normalizedEventName = '') {
+    if (!payload || typeof payload !== 'object') return false;
+
+    const role = String(
+      payload.role ??
+      payload.sender ??
+      payload.author ??
+      payload.source_role ??
+      payload.message_role ??
+      ''
+    ).trim().toLowerCase();
+
+    if (role === 'user' || role === 'human') return true;
+    if (isSuppressedStreamEventName(normalizedEventName)) return true;
+
+    const payloadEventName = normalizeStreamEventName('', payload);
+    if (isSuppressedStreamEventName(payloadEventName)) return true;
+
+    if (!state.currentStreamText && text && text === state.lastUserMessage) {
+      return true;
+    }
+
+    return false;
+  }
+
+  function handleSseEvent(eventName, rawData) {
+    const payload = tryJson(rawData);
+    const normalizedEventName = normalizeStreamEventName(eventName, payload);
+    const text = extractTextFromPayload(payload ?? rawData);
+
+    if (normalizedEventName === 'conversation' || normalizedEventName === 'sid' || eventName === 'conversation' || eventName === 'sid') {
+      const sid = payload?.sid || payload?.conversation_id || payload?.conversationSid || text;
+      if (sid) state.sid = sid;
+      return;
+    }
+
+    if (normalizedEventName === 'sources' || eventName === 'sources') {
+      state.sources = Array.isArray(payload?.items) ? payload.items : Array.isArray(payload) ? payload : [];
+      return;
+    }
+
+    if (isSuppressedStreamEventName(normalizedEventName)) {
+      return;
+    }
+
+    if (isVisibleThoughtEventName(normalizedEventName)) {
+      const logText = text || payload?.message || payload?.content || payload?.detail || payload?.output || payload?.result || '';
+      if (!state.assistantBubble) {
+        state.assistantBubble = buildMessageRow('assistant', '');
+        state.currentThoughtTarget = state.assistantBubble?.thought || null;
+        if (state.currentThoughtTarget) {
+          state.currentThoughtTarget.agentGenerated = true;
+          rememberThoughtTarget(state.currentThoughtTarget);
+        }
+      }
+      if (logText) {
+        if (state.currentThoughtTarget) {
+          state.currentThoughtTarget.hiddenByChunk = false;
+          upsertThoughtLog(state.currentThoughtTarget, normalizedEventName, logText, payload);
+          syncAgentPanelFromThought(state.currentThoughtTarget);
+          renderThoughtBubble(state.currentThoughtTarget);
+        } else {
+          const step = extractStepFromPayload(payload);
+          const last = state.agentLogs[state.agentLogs.length - 1];
+          if (
+            isLiveThoughtEventName(normalizedEventName) &&
+            last &&
+            String(last.type || '').trim().toLowerCase() === normalizedEventName &&
+            normalizeStepValue(last.step) === step
+          ) {
+            last.text = String(last.text || '') + String(logText || '');
+            if (step != null) last.step = step;
+          } else {
+            state.agentLogs.push({ type: normalizedEventName, text: logText, step });
+          }
+        }
+        renderAgentLogPanel();
+      }
+      return;
+    }
+
+    if (SUMMARY_EVENT_NAMES.has(normalizedEventName)) {
+      state.agentSummary = text || payload?.summary || '';
+      if (!state.assistantBubble) {
+        state.assistantBubble = buildMessageRow('assistant', '');
+        state.currentThoughtTarget = state.assistantBubble?.thought || null;
+        if (state.currentThoughtTarget) {
+          state.currentThoughtTarget.agentGenerated = true;
+          rememberThoughtTarget(state.currentThoughtTarget);
+        }
+      }
+      if (state.currentThoughtTarget) {
+        state.currentThoughtTarget.hiddenByChunk = false;
+        state.currentThoughtTarget.summaryText = state.agentSummary;
+        syncAgentPanelFromThought(state.currentThoughtTarget);
+        renderThoughtBubble(state.currentThoughtTarget);
+      }
+      renderAgentLogPanel();
+      return;
+    }
+
+    if (FINAL_TEXT_EVENT_NAMES.has(normalizedEventName)) {
+      if (!text) return;
+
+      if (!state.assistantBubble) {
+        state.assistantBubble = buildMessageRow('assistant', '');
+        state.currentThoughtTarget = state.assistantBubble?.thought || null;
+        rememberThoughtTarget(state.currentThoughtTarget);
+      }
+
+      if (shouldIgnoreAssistantPayload(payload, text, normalizedEventName)) {
+        return;
+      }
+
+      state.currentStreamText = text;
+      updateAssistantBubble(state.currentStreamText);
+      return;
+    }
+
+    if (COMPLETION_EVENT_NAMES.has(normalizedEventName)) {
+      finishStream();
+      return;
+    }
+
+    if (normalizedEventName === 'error') {
+      throw new Error(text || 'stream error');
+    }
+
+    if (shouldIgnoreAssistantPayload(payload, text, normalizedEventName)) {
+      return;
+    }
+
+    if (!text) {
+      return;
+    }
+
+    if (!state.assistantBubble) {
+      state.assistantBubble = buildMessageRow('assistant', '');
+      state.currentThoughtTarget = state.assistantBubble?.thought || null;
+      rememberThoughtTarget(state.currentThoughtTarget);
+    }
+
+    state.currentStreamText = String(state.currentStreamText || '') + String(text || '');
+    updateAssistantBubble(state.currentStreamText);
+  }
+
+  async function streamPostSSE(url, payload) {
+    state.streamController = new AbortController();
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'text/event-stream'
+      },
+      body: JSON.stringify(payload),
+      signal: state.streamController.signal
+    });
+
+    if (!res.ok) {
+      let msg = `HTTP ${res.status}`;
+      try {
+        const text = await res.text();
+        if (text) msg = text;
+      } catch {}
+      throw new Error(msg);
+    }
+
+    if (!res.body) throw new Error('stream body is empty');
+
+    const sidHeader = res.headers.get('X-Conversation-Sid');
+    if (sidHeader) state.sid = sidHeader;
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const chunks = buffer.split(/\n\n/);
+      buffer = chunks.pop() || '';
+
+      for (const chunk of chunks) {
+        if (!chunk.trim()) continue;
+        const ev = parseSseChunk(chunk);
+        handleSseEvent(ev.event, ev.data);
+      }
+    }
+
+    if (buffer.trim()) {
+      const ev = parseSseChunk(buffer);
+      handleSseEvent(ev.event, ev.data);
+    }
+
+    finishStream();
+  }
+
+  function finishStream() {
+    if (state.streamFinished) return;
+    state.streamFinished = true;
+    setStatus('idle');
+    btnSend.disabled = false;
+    btnStop.classList.add('hidden');
+    state.streamController = null;
+
+    if (state.currentThoughtTarget) {
+      syncAgentPanelFromThought(state.currentThoughtTarget);
+      renderThoughtBubble(state.currentThoughtTarget);
+    }
+
+    state.assistantBubble = null;
+    state.currentThoughtTarget = null;
+    state.currentStreamText = '';
+    refreshConversationList();
+    renderAgentLogPanel();
+    state.messageThoughts.forEach((item) => renderThoughtBubble(item));
+  }
+
+  function stopCurrentRequest() {
+    if (state.streamController) {
+      try { state.streamController.abort(); } catch {}
+      state.streamController = null;
+    }
+    state.streamFinished = true;
+    btnSend.disabled = false;
+    btnStop.classList.add('hidden');
+    setStatus('idle');
+    state.assistantBubble = null;
+    state.currentThoughtTarget = null;
+    state.currentStreamText = '';
+    renderAgentLogPanel();
+  }
+
+  async function sendMessage() {
+    const text = msg.value.trim();
+    if (!text) return;
+
+    closeMobileHistory();
+    ensureChatVisible();
+    if (usesAgentStylePanel(state.mode)) {
+      resetAgentLogs();
+    } else {
+      closeAgentLogPanel();
+    }
+    buildMessageRow('user', text);
+
+    if (!state.sid) {
+      chatTitle.textContent = text.length > 24 ? `${text.slice(0, 24)}…` : text;
+    }
+
+    msg.value = '';
+    updateCharCount();
+    autoResizeTextarea();
+
+    setStatus('streaming');
+    renderAgentLogPanel();
+    btnSend.disabled = true;
+    btnStop.classList.remove('hidden');
+    state.assistantBubble = null;
+    state.currentThoughtTarget = null;
+    state.currentStreamText = '';
+    state.sources = [];
+    state.lastUserMessage = text;
+    state.streamFinished = false;
+
+    const endpoint =
+      state.mode === 'rag'
+        ? '/api/rag/stream'
+        : state.mode === 'agent'
+          ? '/api/agent/stream'
+          : state.mode === 'auto'
+            ? '/api/auto_chet/stream'
+            : state.mode === 'speed_agent'
+              ? '/api/agent_speed/stream'
+              : '/api/chat/stream';
+
+    const payload = state.mode === 'rag'
+      ? {
+          message: text,
+          collection: (ragCollection.value || 'kb_current').trim() || 'kb_current',
+          mode: 'normal',
+          sid: state.sid || ''
+        }
+      : state.mode === 'agent'
+        ? {
+            message: text,
+            mode: 'agent',
+            sid: state.sid || ''
+          }
+        : state.mode === 'auto'
+          ? {
+              message: text,
+              mode: 'auto',
+              sid: state.sid || ''
+            }
+          : state.mode === 'speed_agent'
+            ? {
+                message: text,
+                mode: 'speed_agent',
+                sid: state.sid || ''
+              }
+            : {
+                message: text,
+                mode: 'normal',
+                sid: state.sid || ''
+              };
+
+    try {
+      await streamPostSSE(endpoint, payload);
+    } catch (err) {
+      if (err?.name === 'AbortError') {
+        finishStream();
+        return;
+      }
+      console.error(err);
+      state.streamFinished = true;
+      ensureChatVisible();
+      buildMessageRow('assistant', `오류가 발생했습니다.\n\n${err?.message || 'connection error'}`);
+      setStatus('error');
+      btnSend.disabled = false;
+      btnStop.classList.add('hidden');
+    }
+  }
+
+  mobileMenuOpen?.addEventListener('click', openMobileSidebar);
+  mobileMenuClose?.addEventListener('click', closeMobileSidebar);
+  mobileSidebarBackdrop?.addEventListener('click', closeMobileSidebar);
+
+  mobileHistoryOpen?.addEventListener('click', openMobileHistory);
+  mobileHistoryClose?.addEventListener('click', closeMobileHistory);
+  mobileHistoryBackdrop?.addEventListener('click', closeMobileHistory);
+
+  myMenuButton?.addEventListener('click', function(e) {
+    e.stopPropagation();
+    toggleMyMenu();
+  });
+  document.addEventListener('click', function(e) {
+    if (!myMenu.contains(e.target) && !myMenuButton.contains(e.target)) closeMyMenu();
+  });
+
+  msg?.addEventListener('input', function() {
+    updateCharCount();
+    autoResizeTextarea();
+  });
+  msg?.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  btnSend?.addEventListener('click', sendMessage);
+  btnStop?.addEventListener('click', stopCurrentRequest);
+
+  modeSelect?.addEventListener('change', function() {
+    setMode(this.value);
+  });
+
+  document.getElementById('newChatBtn')?.addEventListener('click', resetChatUI);
+  document.getElementById('mobileNewChatBtn')?.addEventListener('click', resetChatUI);
+  document.getElementById('clearHistoryBtn')?.addEventListener('click', clearAllConversations);
+
+  historySearch?.addEventListener('input', refreshConversationList);
+  mobileHistorySearch?.addEventListener('input', refreshConversationList);
+
+  conversationList?.addEventListener('click', function(e) {
+    const item = e.target.closest('.history-item');
+    if (!item) return;
+    openConversationFromList(item.dataset.sid);
+  });
+  mobileConversationList?.addEventListener('click', function(e) {
+    const item = e.target.closest('.history-item');
+    if (!item) return;
+    openConversationFromList(item.dataset.sid);
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeMobileSidebar();
+      closeMobileHistory();
+      closeMyMenu();
+      closeAgentLogPanel();
+    }
+  });
+
+  setMode(loadSelectedMode(), { persist: false });
+  setStatus('idle');
+  updateCharCount();
+  autoResizeTextarea();
+  refreshConversationList();
+  renderAgentLogPanel();
+</script>
+</body>
+</html>
